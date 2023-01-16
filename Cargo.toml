@@ -1,13 +1,13 @@
 [package]
-name = "pallet-template"
-version = "0.1.0"
+name = "peaq-pallet-template"
+version = "0.0.1"
 edition = "2021"
 description = 'A pallet that handles peaq ...'
 authors = ['peaq <https://github.com/peaqnetwork>']
 homepage = 'https://peaq.network/'
 license = 'Apache-2.0'
 publish = false
-# repository = 'https://github.com/peaqnetwork/peaq-pallet-rbac/'
+repository = 'https://github.com/peaqnetwork/peaq-pallet-template/'
 
 [package.metadata.docs.rs]
 targets = ["x86_64-unknown-linux-gnu"]
