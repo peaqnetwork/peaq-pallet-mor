@@ -1525,7 +1525,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "peaq-pallet-template"
+name = "peaq-pallet-mor"
 version = "0.0.1"
 dependencies = [
  "frame-benchmarking",

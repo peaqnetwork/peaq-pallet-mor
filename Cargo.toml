@@ -1,13 +1,13 @@
 [package]
-name = "peaq-pallet-template"
+name = "peaq-pallet-mor"
 version = "0.0.1"
 edition = "2021"
-description = 'A pallet that handles peaq ...'
+description = 'A pallet that handles peaq`s block reward distribution for machine owners.'
 authors = ['peaq <https://github.com/peaqnetwork>']
 homepage = 'https://peaq.network/'
 license = 'Apache-2.0'
 publish = false
-repository = 'https://github.com/peaqnetwork/peaq-pallet-template/'
+repository = 'https://github.com/peaqnetwork/peaq-pallet-mor/'
 
 [package.metadata.docs.rs]
 targets = ["x86_64-unknown-linux-gnu"]
