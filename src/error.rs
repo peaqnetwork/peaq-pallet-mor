@@ -17,6 +17,8 @@ pub type Result<T> = core::result::Result<T, MorError>;
 pub enum MorErrorType {
     /// Sent when an owner does not exist
     OwnerDoesNotExist,
+    /// Sent when a machine description exceeds maximum length of 64 bytes
+    MachineNameExceedMax64,
     /// Sent when a machine is already registered (double registration)
     MachineAlreadyExists,
     /// Sent when a machine is disabled and tried to be accessed

@@ -37,11 +37,12 @@ pub mod pallet {
         error::{
             MorError,
             MorErrorType::{
-                OwnerDoesNotExist, MachineAlreadyExists, MachineIsDisabled, MachineDoesNotExist,
+                OwnerDoesNotExist, MachineNameExceedMax64, MachineAlreadyExists, 
+                MachineIsDisabled, MachineDoesNotExist,
             },
             Result
         },
-        structs::Machine,
+        structs::{Machine, MachineDesc},
         traits::{Mor, MachineAdm},
         weights::WeightInfo,
     };
@@ -100,6 +101,7 @@ pub mod pallet {
     
     // The pallet's runtime storage items.
     // https://docs.substrate.io/main-docs/build/runtime-storage/
+    /// This storage keeps all registered machines, their descriptions and states
     #[pallet::storage]
     // #[pallet::getter(fn machines_of)]
     pub type Machines<T: Config> = StorageDoubleMap<_,
@@ -110,8 +112,14 @@ pub mod pallet {
             Machine,
             ValueQuery>;
 
+    /// This storage is only a lookup table, to make sure, that each machine will be
+    /// registered only once (prevents registering same machine on different accounts)
     #[pallet::storage]
-    pub type MachineIds<T: Config> = StorageValue<_, T::MachineId, ValueQuery>;
+    pub type MachineIds<T: Config> = StorageMap<_,
+        Blake2_128Concat,
+        T::MachineId,
+        (),
+        ValueQuery>;
 
     
     // Pallets use events to inform users when important changes are made.
@@ -132,6 +140,7 @@ pub mod pallet {
     #[pallet::error]
     pub enum Error<T> {
         OwnerDoesNotExist,
+        MachineNameExceedMax64,
         MachineAlreadyExists,
         MachineIsDisabled,
         MachineDoesNotExist,
@@ -140,6 +149,7 @@ pub mod pallet {
     impl<T: Config> Error<T> {
         fn dispatch_error(err: MorError) -> DispatchResult {
             match err.typ {
+                MachineNameExceedMax64 => Err(Error::<T>::MachineNameExceedMax64.into()),
                 OwnerDoesNotExist => Err(Error::<T>::OwnerDoesNotExist.into()),
                 MachineAlreadyExists => Err(Error::<T>::MachineAlreadyExists.into()),
                 MachineIsDisabled => Err(Error::<T>::MachineIsDisabled.into()),
@@ -198,8 +208,18 @@ pub mod pallet {
     impl<T: Config> MachineAdm<T::MachineId, T::AccountId> for Pallet<T> {
         fn add_machine(
             owner: &T::AccountId,
-            machine: &T::MachineId
+            machine: &T::MachineId,
+            desc: &MachineDesc
         ) -> Result<()> {
+            // First we check if this machine ID already exists in MachineIds storage,
+            // to prevent that one machine will be registered in multiple accounts.
+            if <MachineIds<T>>::contains_key(machine) {
+                return MorError::err(MachineAlreadyExists, machine)
+            }
+
+            <Machines<T>>::insert(owner, machine, Machine::new(desc)?);
+            <MachineIds<T>>::insert(machine, ());
+
             Ok(())
         }
 

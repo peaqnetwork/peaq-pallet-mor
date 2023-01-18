@@ -2,7 +2,7 @@
 
 use sp_std::vec::Vec;
 
-use crate::structs::Machine;
+use crate::structs::*;
 
 pub use crate::error::Result;
 
@@ -21,7 +21,7 @@ pub trait Mor<MachineId, AccountId> {
 /// Trait defines internal behaviour in relation to a certain machine
 pub trait MachineAdm<MachineId, AccountId> {
     /// Creates a new machine entry and adds to storage
-    fn add_machine(owner: &AccountId, machine: &MachineId) -> Result<()>;
+    fn add_machine(owner: &AccountId, machine: &MachineId, desc: &MachineDesc) -> Result<()>;
 
     /// Updates the owner's account of a registered machine
     fn update_account(owner: &AccountId, new_owner: &AccountId, machine: &MachineId) -> Result<()>;
