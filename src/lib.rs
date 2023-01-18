@@ -127,10 +127,12 @@ pub mod pallet {
     #[pallet::event]
     #[pallet::generate_deposit(pub(super) fn deposit_event)]
     pub enum Event<T: Config> {
-        /// Some event description
+        /// A new machine was registered on the network
         NewMachineRegistered(T::AccountId, T::MachineId),
+        /// Machine has been rewarded for beeing online on the network
+        MachineGotRewarded(()),
         /// Machine entry was fetched
-        FetchedMachine(Machine),
+        FetchedMachineDescription(Machine),
     }
 
 
@@ -164,20 +166,39 @@ pub mod pallet {
     // Dispatchable functions must be annotated with a weight and must return a DispatchResult.
     #[pallet::call]
     impl<T: Config> Pallet<T> {
+        /// Registers a new machine on the network by given account-ID and machine-ID.
         #[pallet::weight(T::WeightInfo::some_extrinsic())]
         pub fn register_new_machine(
             origin: OriginFor<T>,
-            machine: T::MachineId,
             owner: T::AccountId,
+            machine: T::MachineId,
+            desc: MachineDesc
         ) -> DispatchResult {
             ensure_signed(origin)?;
 
             dpatch_dposit_par!(
-                Self::register_machine(&owner, &machine),
+                <Self as Mor<T::AccountId, T::MachineId>>::register_new_machine(&owner, &machine, &desc),
                 Event::NewMachineRegistered(owner, machine)
             )
         }
 
+        /// In this early version one can collect rewards for a machine, which has been online
+        /// on the network for a certain period of time.
+        #[pallet::weight(T::WeightInfo::some_extrinsic())]
+        pub fn get_online_rewards(
+            origin: OriginFor<T>,
+            owner: T::AccountId,
+            machine: T::MachineId
+        ) -> DispatchResult {
+            ensure_signed(origin)?;
+
+            dpatch_dposit!(
+                <Self as Mor<T::AccountId, T::MachineId>>::get_online_rewards(&owner, &machine),
+                Event::MachineGotRewarded
+            )
+        }
+
+        /// Fetch a machine's description.
         #[pallet::weight(T::WeightInfo::some_extrinsic())]
         pub fn fetch_machine(
             origin: OriginFor<T>,
@@ -188,24 +209,32 @@ pub mod pallet {
 
             dpatch_dposit!(
                 Self::get_machine(&owner, &machine),
-                Event::FetchedMachine
+                Event::FetchedMachineDescription
             )
         }
     }
 
     // See description about crate::traits::Mor
-    impl<T: Config> Mor<T::MachineId, T::AccountId> for Pallet<T> {
-        fn register_machine(owner: &T::AccountId, machine: &T::MachineId) -> Result<()> {
-            Ok(())
+    impl<T: Config> Mor<T::AccountId, T::MachineId> for Pallet<T> {
+        fn register_new_machine(
+            owner: &T::AccountId,
+            machine: &T::MachineId,
+            desc: &MachineDesc
+        ) -> Result<()> {
+            Self::add_machine(owner, machine, desc)?;
+            todo!()
         }
 
-        fn get_rewarded(owner: &T::AccountId, machine: &T::MachineId) -> Result<()> {
-            Ok(())
+        fn get_online_rewards(
+            owner: &T::AccountId,
+            machine: &T::MachineId
+        ) -> Result<()> {
+            todo!()
         }
     }
 
-    // See description about crate::traits::MachineAdm
-    impl<T: Config> MachineAdm<T::MachineId, T::AccountId> for Pallet<T> {
+    // For method's description have a look at crate::traits::MachineAdm
+    impl<T: Config> MachineAdm<T::AccountId, T::MachineId> for Pallet<T> {
         fn add_machine(
             owner: &T::AccountId,
             machine: &T::MachineId,
@@ -228,10 +257,16 @@ pub mod pallet {
             new_owner: &T::AccountId,
             machine: &T::MachineId
         ) -> Result<()> {
+            let ms = Self::get_machine(owner, machine)?;
+            <Machines<T>>::remove(owner, machine);
+            <Machines<T>>::insert(new_owner, machine, ms);
             Ok(())
         }
 
         fn disable_machine(owner: &T::AccountId, machine: &T::MachineId) -> Result<()> {
+            let mut ms = Self::get_machine(owner, machine)?;
+            ms.enabled = false;
+            <Machines<T>>::set(owner, machine, ms);
             Ok(())
         }
 
@@ -243,7 +278,12 @@ pub mod pallet {
                     MorError::err(MachineDoesNotExist, machine)
                 }
             } else {
-                Ok(<Machines<T>>::get(owner, machine))
+                let ms = <Machines<T>>::get(owner, machine);
+                if ms.enabled {
+                    Ok(ms)
+                } else {
+                    MorError::err(MachineIsDisabled, machine)
+                }
             }
         }
 
@@ -252,7 +292,11 @@ pub mod pallet {
         ) -> Result<Vec<Machine>> {
             let owned_machines = <Machines<T>>::iter_prefix_values(owner);
             let mut machines = Vec::new();
-            owned_machines.for_each(|m| machines.push(m.clone()));
+            owned_machines.for_each(|m| {
+                if m.enabled {
+                    machines.push(m.clone())
+                }
+            });
             if machines.is_empty() {
                 MorError::err(OwnerDoesNotExist, owner)
             } else {

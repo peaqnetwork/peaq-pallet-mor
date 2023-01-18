@@ -8,18 +8,18 @@ pub use crate::error::Result;
 
 
 /// Trait defines the basic behaviour of Machine Owners Rewards (MOR)
-pub trait Mor<MachineId, AccountId> {
+pub trait Mor<AccountId, MachineId> {
     /// This method registers a new machine on the network and rewards the owner once
-    fn register_machine(owner: &AccountId, machine: &MachineId) -> Result<()>;
+    fn register_new_machine(owner: &AccountId, machine: &MachineId, desc: &MachineDesc) -> Result<()>;
     
     /// This method rewards machine owners for their machines beeing online on
     /// the network for a certain period of time
-    fn get_rewarded(owner: &AccountId, machine: &MachineId) -> Result<()>;
+    fn get_online_rewards(owner: &AccountId, machine: &MachineId) -> Result<()>;
 }
 
 
 /// Trait defines internal behaviour in relation to a certain machine
-pub trait MachineAdm<MachineId, AccountId> {
+pub trait MachineAdm<AccountId, MachineId> {
     /// Creates a new machine entry and adds to storage
     fn add_machine(owner: &AccountId, machine: &MachineId, desc: &MachineDesc) -> Result<()>;
 
