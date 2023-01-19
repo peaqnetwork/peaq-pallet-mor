@@ -7,7 +7,9 @@ use sp_core::RuntimeDebug;
 use sp_std::vec::Vec;
 use std::io::Write;
 
-use crate::error::{MorError, MorErrorType::MachineNameExceedMax64, Result};
+use crate::error::{
+    MorError, MorErrorType::MachineNameExceedMax64, Result
+};
 
 
 /// Machine struct stores information about one registered machine. The owner can setup
@@ -70,7 +72,7 @@ impl MachineDesc {
         bytes.push(b'_');
         bytes.extend_from_slice(&self.typ);
         bytes.push(b'_');
-        write!(bytes, "{:05}", self.count);
+        write!(bytes, "{:05}", self.count)?;
         if bytes.len() <= 64 {
             Ok(bytes)
         } else {

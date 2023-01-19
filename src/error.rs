@@ -25,6 +25,8 @@ pub enum MorErrorType {
     MachineIsDisabled,
     /// Sent when a machine does not exist (could not be found)
     MachineDoesNotExist,
+    /// Sent when an I/O-error occurs during MachineDesc-into-bytes transformation
+    MachineDescIoError,
 }
 
 
@@ -44,5 +46,14 @@ impl MorError {
         // this transformation makes it possible to use RbacError without generic
         let param = param.encode().as_slice().to_vec();
         Err(MorError { typ, msg: param })
+    }
+}
+
+impl From<std::io::Error> for MorError {
+    fn from(_value: std::io::Error) -> MorError {
+        MorError{ 
+            typ: MorErrorType::MachineDescIoError,
+            msg: Vec::new()
+        }
     }
 }

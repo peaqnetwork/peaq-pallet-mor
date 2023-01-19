@@ -25,9 +25,15 @@ pub use weights::WeightInfo;
 pub mod pallet {
 
     use codec::MaxEncodedLen;
-    use frame_support::pallet_prelude::*;
     use frame_system::pallet_prelude::*;
-    // use sp_io::hashing::blake2_256;
+    use frame_support::{
+        pallet_prelude::*,
+        PalletId,
+        traits::{
+            Currency, ExistenceRequirement, Get, LockableCurrency, ReservableCurrency
+        }
+    };
+    use sp_runtime::traits::{AccountIdConversion, CheckedSub, Zero};
     use sp_std::{
         fmt::Debug,
         vec::Vec,
@@ -38,15 +44,26 @@ pub mod pallet {
             MorError,
             MorErrorType::{
                 OwnerDoesNotExist, MachineNameExceedMax64, MachineAlreadyExists, 
-                MachineIsDisabled, MachineDoesNotExist,
+                MachineIsDisabled, MachineDoesNotExist, MachineDescIoError,
             },
             Result
         },
-        structs::{Machine, MachineDesc},
-        traits::{Mor, MachineAdm},
+        structs::*,
+        traits::*,
         weights::WeightInfo,
     };
 
+
+    macro_rules! dpatch {
+        ($res:expr) => {
+            match $res {
+                Ok(_d) => {
+                    Ok(())
+                }
+                Err(e) => Error::<T>::dispatch_error(e),
+            }
+        };
+    }
 
     macro_rules! dpatch_dposit {
         ($res:expr, $event:expr) => {
@@ -82,8 +99,21 @@ pub mod pallet {
     /// Configure the pallet by specifying the parameters and types on which it depends.
     #[pallet::config]
     pub trait Config: frame_system::Config {
+        // TODO define dependencies on other pallets...
+
         /// Because this pallet emits events, it depends on the runtime's definition of an event.
         type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+        
+        /// Currency...
+        type Currency: Currency<Self::AccountId>
+			+ ReservableCurrency<Self::AccountId>
+			+ LockableCurrency<Self::AccountId>
+			+ Eq;
+
+        /// Account Identifier from which the internal Pot is generated.
+		#[pallet::constant]
+		type PotId: Get<PalletId>;
+        
         /// Machines are getting identified by an ID type
         type MachineId: Parameter
             + Member
@@ -94,6 +124,7 @@ pub mod pallet {
             + Copy
             + MaxEncodedLen
             + Default;
+        
         /// Weight information for extrinsics in this pallet.
         type WeightInfo: WeightInfo;
     }
@@ -130,7 +161,7 @@ pub mod pallet {
         /// A new machine was registered on the network
         NewMachineRegistered(T::AccountId, T::MachineId),
         /// Machine has been rewarded for beeing online on the network
-        MachineGotRewarded(()),
+        OwnerGotRewarded(T::AccountId, Balance<T>),
         /// Machine entry was fetched
         FetchedMachineDescription(Machine),
     }
@@ -146,16 +177,18 @@ pub mod pallet {
         MachineAlreadyExists,
         MachineIsDisabled,
         MachineDoesNotExist,
+        MachineDescIoError,
     }
 
     impl<T: Config> Error<T> {
         fn dispatch_error(err: MorError) -> DispatchResult {
             match err.typ {
-                MachineNameExceedMax64 => Err(Error::<T>::MachineNameExceedMax64.into()),
                 OwnerDoesNotExist => Err(Error::<T>::OwnerDoesNotExist.into()),
+                MachineNameExceedMax64 => Err(Error::<T>::MachineNameExceedMax64.into()),
                 MachineAlreadyExists => Err(Error::<T>::MachineAlreadyExists.into()),
                 MachineIsDisabled => Err(Error::<T>::MachineIsDisabled.into()),
                 MachineDoesNotExist => Err(Error::<T>::MachineDoesNotExist.into()),
+                MachineDescIoError => Err(Error::<T>::MachineDescIoError.into()),
             }
         }
     }
@@ -192,9 +225,8 @@ pub mod pallet {
         ) -> DispatchResult {
             ensure_signed(origin)?;
 
-            dpatch_dposit!(
-                <Self as Mor<T::AccountId, T::MachineId>>::get_online_rewards(&owner, &machine),
-                Event::MachineGotRewarded
+            dpatch!(
+                <Self as Mor<T::AccountId, T::MachineId>>::get_online_rewards(&owner, &machine)
             )
         }
 
@@ -222,14 +254,47 @@ pub mod pallet {
             desc: &MachineDesc
         ) -> Result<()> {
             Self::add_machine(owner, machine, desc)?;
-            todo!()
+            Self::get_registration_reward(owner);
+            Ok(())
         }
 
         fn get_online_rewards(
             owner: &T::AccountId,
             machine: &T::MachineId
         ) -> Result<()> {
-            todo!()
+            Self::get_machine(owner, machine)?;
+            Self::get_available_rewards(owner);
+            Ok(())
+        }
+    }
+
+    // See description about crate::traits::PotAdm
+    impl<T: Config> PotAdm<T::AccountId, Balance<T>> for Pallet<T> {
+        fn account_id() -> T::AccountId {
+			T::PotId::get().into_account_truncating()
+		}
+
+        fn do_reward(
+            pot: &T::AccountId,
+            who: &T::AccountId,
+            reward: Balance<T>
+        ) {
+            // Copied from parachain_staking::Pallet::do_reward()
+            if let Ok(_success) = T::Currency::transfer(pot, who, reward, ExistenceRequirement::KeepAlive) {
+				Self::deposit_event(Event::OwnerGotRewarded(who.clone(), reward));
+			}
+        }
+
+        fn get_available_rewards(owner: &T::AccountId) {
+            let pot = Self::account_id();
+            let issue_number = T::Currency::free_balance(&pot)
+                .checked_sub(&T::Currency::minimum_balance())
+                .unwrap_or_else(Zero::zero);
+            Self::do_reward(&pot, &owner, issue_number);
+        }
+
+        fn get_registration_reward(owner: &T::AccountId) {
+            Self::get_available_rewards(owner);
         }
     }
 
