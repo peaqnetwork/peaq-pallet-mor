@@ -16,7 +16,7 @@ use crate::error::{
 /// one account for getting rewarded. A machine cannot be deleted, but be disabled instead.
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 #[derive(
-    Clone, PartialEq, Eq, PartialOrd, Ord, Default, TypeInfo, Decode, Encode, RuntimeDebug,
+    Clone, PartialEq, Eq, Default, TypeInfo, Decode, Encode, RuntimeDebug,
 )]
 pub struct Machine {
     /// Name of the registered machine

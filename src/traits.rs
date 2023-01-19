@@ -9,9 +9,7 @@ pub use crate::error::Result;
 
 
 // Pallet specific type definitions
-pub type AccountId<T> = <T as frame_system::Config>::AccountId;
-pub type MachineId<T> = <T as crate::Config>::MachineId;
-pub type Balance<T> = <<T as crate::Config>::Currency as Currency<AccountId<T>>>::Balance;
+pub type Balance<T> = <<T as crate::Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
 
 
 /// Trait defines the basic behaviour of Machine Owners Rewards (MOR)

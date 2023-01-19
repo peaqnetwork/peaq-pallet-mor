@@ -13,7 +13,7 @@ pub type Result<T> = core::result::Result<T, MorError>;
 
 /// This enum defines the basic type of error for this pallet
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
-#[derive(Debug, Encode, Decode)]
+#[derive(Debug, PartialEq, Eq, Encode, Decode)]
 pub enum MorErrorType {
     /// Sent when an owner does not exist
     OwnerDoesNotExist,
@@ -32,7 +32,7 @@ pub enum MorErrorType {
 
 /// This struct...
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
-#[derive(Debug, Encode, Decode)]
+#[derive(Debug, PartialEq, Eq, Encode, Decode)]
 pub struct MorError {
     /// Type of error, see definition above
     pub typ: MorErrorType,
