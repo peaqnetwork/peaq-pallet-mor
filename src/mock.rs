@@ -26,7 +26,7 @@ frame_support::construct_runtime!(
         System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
         Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent},
         Balances: pallet_balances::{Pallet, Call, Config<T>, Storage, Event<T>},
-        PeaqPalletMor: peaq_pallet_mor::{Pallet, Call, Storage, Event<T>},
+        PeaqMor: peaq_pallet_mor::{Pallet, Call, Storage, Event<T>},
     }
 );
 
