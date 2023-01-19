@@ -4,7 +4,7 @@ use frame_support::{assert_ok, assert_noop};
 use crate::{
     mock::*,
     Error,
-    structs::MachineDesc,
+    // structs::MachineDesc,
 };
 
 
@@ -14,12 +14,7 @@ fn register_new_machine_test() {
         let acct = "Micha";
         let origin = account_key(acct);
         let machine = *b"21676474666576474646673646376637";
-        let desc = MachineDesc::from_terms(
-            "owner",
-            "location",
-            "typ",
-            1
-        );
+        let name: Vec<u8> = Vec::from("owner_location_type_00001");
 
         // Register new machine on the network.
         // Expect no error.
@@ -27,7 +22,7 @@ fn register_new_machine_test() {
             Origin::signed(origin),
             origin,
             machine,
-            desc
+            name
         ));
     });
 }
@@ -40,12 +35,7 @@ fn fetch_machine_test() {
         let origin = account_key(acct);
         let machine = *b"21676474666576474646673646376637";
         let machine_err = *b"21676474666576474646673646376638";
-        let desc = MachineDesc::from_terms(
-            "owner",
-            "location",
-            "typ",
-            1
-        );
+        let name: Vec<u8> = Vec::from("owner_location_type_00001");
 
         // Fetch a machine, but no machines are registered.
         // Expect OwnerDoesNotExist error
@@ -63,7 +53,7 @@ fn fetch_machine_test() {
             Origin::signed(origin),
             origin,
             machine,
-            desc
+            name
         ));
 
         // Fetch registered machine.
@@ -95,12 +85,7 @@ fn get_online_rewards_test() {
         let origin = account_key(acct);
         let machine = *b"21676474666576474646673646376637";
         let machine_err = *b"21676474666576474646673646376638";
-        let desc = MachineDesc::from_terms(
-            "owner",
-            "location",
-            "typ",
-            1
-        );
+        let name: Vec<u8> = Vec::from("owner_location_type_00001");
 
         // Try to collect rewards. No machines registered.
         // Expect error OwnerDoesNotExist.
@@ -117,7 +102,7 @@ fn get_online_rewards_test() {
             Origin::signed(origin),
             origin,
             machine,
-            desc
+            name
         ));
         
         // Try to get rewarded for wrong machine.
@@ -140,18 +125,18 @@ fn get_online_rewards_test() {
     });
 }
 
-#[test]
-fn desc_test() {
-    let desc = MachineDesc::from_terms(
-        "owner",
-        "location",
-        "typ",
-        1
-    );
+// #[test]
+// fn desc_test() {
+//     let desc = MachineDesc::from_terms(
+//         "owner",
+//         "location",
+//         "typ",
+//         1
+//     );
 
-    let result = String::from("owner_location_typ_00001")
-        .as_bytes()
-        .to_vec();
+//     let result = String::from("owner_location_typ_00001")
+//         .as_bytes()
+//         .to_vec();
 
-    assert_eq!(desc.as_bytes(), Ok(result));
-}
+//     assert_eq!(desc.as_bytes(), Ok(result));
+// }

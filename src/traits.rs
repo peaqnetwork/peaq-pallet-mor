@@ -15,7 +15,7 @@ pub type Balance<T> = <<T as crate::Config>::Currency as Currency<<T as frame_sy
 /// Trait defines the basic behaviour of Machine Owners Rewards (MOR)
 pub trait Mor<AccountId, MachineId> {
     /// This method registers a new machine on the network and rewards the owner once.
-    fn register_new_machine(owner: &AccountId, machine: &MachineId, desc: &MachineDesc) -> Result<()>;
+    fn register_new_machine(owner: &AccountId, machine: &MachineId, name: &Vec<u8>) -> Result<()>;
     
     /// This method rewards machine owners for their machines beeing online on
     /// the network for a certain period of time.
@@ -44,7 +44,7 @@ pub trait PotAdm<AccountId, Balance> {
 /// Trait defines internal behaviour in relation to a certain machine
 pub trait MachineAdm<AccountId, MachineId> {
     /// Creates a new machine entry and adds to storage.
-    fn add_machine(owner: &AccountId, machine: &MachineId, desc: &MachineDesc) -> Result<()>;
+    fn add_machine(owner: &AccountId, machine: &MachineId, desc: &Vec<u8>) -> Result<()>;
 
     /// Updates the owner's account of a registered machine.
     fn update_account(owner: &AccountId, new_owner: &AccountId, machine: &MachineId) -> Result<()>;

@@ -205,12 +205,12 @@ pub mod pallet {
             origin: OriginFor<T>,
             owner: T::AccountId,
             machine: T::MachineId,
-            desc: MachineDesc
+            name: Vec<u8>
         ) -> DispatchResult {
             ensure_signed(origin)?;
 
             dpatch_dposit_par!(
-                <Self as Mor<T::AccountId, T::MachineId>>::register_new_machine(&owner, &machine, &desc),
+                <Self as Mor<T::AccountId, T::MachineId>>::register_new_machine(&owner, &machine, &name),
                 Event::NewMachineRegistered(owner, machine)
             )
         }
@@ -251,9 +251,9 @@ pub mod pallet {
         fn register_new_machine(
             owner: &T::AccountId,
             machine: &T::MachineId,
-            desc: &MachineDesc
+            name: &Vec<u8>
         ) -> Result<()> {
-            Self::add_machine(owner, machine, desc)?;
+            Self::add_machine(owner, machine, name)?;
             Self::get_registration_reward(owner);
             Ok(())
         }
@@ -303,7 +303,7 @@ pub mod pallet {
         fn add_machine(
             owner: &T::AccountId,
             machine: &T::MachineId,
-            desc: &MachineDesc
+            name: &Vec<u8>
         ) -> Result<()> {
             // First we check if this machine ID already exists in MachineIds storage,
             // to prevent that one machine will be registered in multiple accounts.
@@ -311,7 +311,7 @@ pub mod pallet {
                 return MorError::err(MachineAlreadyExists, machine)
             }
 
-            <Machines<T>>::insert(owner, machine, Machine::new(desc)?);
+            <Machines<T>>::insert(owner, machine, Machine::new(name));
             <MachineIds<T>>::insert(machine, ());
 
             Ok(())

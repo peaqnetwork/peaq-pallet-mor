@@ -49,11 +49,12 @@ impl MorError {
     }
 }
 
-impl From<std::io::Error> for MorError {
-    fn from(_value: std::io::Error) -> MorError {
-        MorError{ 
-            typ: MorErrorType::MachineDescIoError,
-            msg: Vec::new()
-        }
-    }
-}
+// #[cfg(feature = "std")]
+// impl From<std::io::Error> for MorError {
+//     fn from(_value: std::io::Error) -> MorError {
+//         MorError{ 
+//             typ: MorErrorType::MachineDescIoError,
+//             msg: Vec::new()
+//         }
+//     }
+// }
