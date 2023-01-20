@@ -1,4 +1,84 @@
-//! Pallet template
+//! # Peaq-Pallet-Mor
+//! 
+//! Peaq-Pallet-Mor is a substrate based custom pallet of EoTLabs GmbH. For more
+//! general informations about this pallet's elements, have a look into the following
+//! links:
+//! - <https://docs.substrate.io/build/custom-pallets/>
+//! - <https://docs.substrate.io/build/events-and-errors/>
+//! - <https://docs.substrate.io/build/runtime-storage/>
+//! - <https://docs.substrate.io/build/tx-weights-fees/>
+//! 
+//! ## Overview
+//!  
+//! In this crate, the pallet is defined which implements the functionality to
+//! distribute Machine Owner Rewards (MOR). About possible rewards have a look
+//! into paragraph Rewarding. For informations about the technical architecture
+//! have a look in the description of module ```traits```.
+//! 
+//! Please have also a look into the README of the GitHub repository.
+//! 
+//! ### Terminology
+//! 
+//! - **Machine:** TODO.
+//! 
+//! - **Owner:** TODO
+//! 
+//! - **Machine-Description:** TODO
+//! 
+//! - **Reward:** TODO
+//!  
+//! ### Rewarding
+//! 
+//! At Peaq we reward machine owners for registering new machines to the network,
+//! and for their machines continously beeing online on the network. This pallet
+//! will implement those reward mechanisms.
+//! 
+//! Rewards will be given either in that moment, when a new machine will be registerd,
+//! or after beeing online a certain period of time.
+//! 
+//! ## Technical Informations
+//! 
+//! ### Integration on Runtime
+//! 
+//! How to generally add a pallet to the runtime, have a look at the substrate's
+//! documentation. Basic steps are:
+//! 
+//! - Define a Pot-Account for it, e.g.:
+//!     ```
+//!     parameter_types! {
+//!	        pub const PotMorId: PalletId = PalletId(*b"PotMchOw");
+//!     }
+//!     ```
+//! 
+//! - Configure the pallet within the runtime by defining:
+//!     ```
+//!     impl peaq_pallet_mor::Config for Runtime {
+//!         type Event = Event;
+//!         type Currency = Balances;
+//!         type PotId = PotMorId;
+//!         type MachineId = MachineId;
+//!         type WeightInfo = peaq_pallet_mor::weights::SubstrateWeight<Runtime>;
+//!     }
+//!     ```
+//! - Add pallet on list of pallets within `construct_runtime!` macro:
+//!     ```PeaqMor: peaq_pallet_mor::{Pallet, Call, Storage, Event<T>}```
+//! 
+//! - TODO
+//! 
+//! ### Dispatchable Functions (Extrinsics)
+//! 
+//! - `register_new_machine` - As it says, to register a new machine with an unique 
+//!     machine-ID. Machines can only be registered once, and not be deleted. If you
+//!     want to remove a machine, you can disable it.
+//! 
+//! - `get_online_rewards` - Machine owners can be rewarded for having their machines 
+//!     continiously online on the network.
+//! 
+//! - `fetch_machine` - Fetches a registered machine's description and its enable-state.
+//! 
+//! - TODO
+//! 
+
 #![cfg_attr(not(feature = "std"), no_std)]
 // Fix benchmarking failure
 #![recursion_limit = "256"]
@@ -44,7 +124,8 @@ pub mod pallet {
             MorError,
             MorErrorType::{
                 OwnerDoesNotExist, MachineNameExceedMax64, MachineAlreadyExists, 
-                MachineIsDisabled, MachineDoesNotExist, MachineDescIoError,
+                MachineIsDisabled, MachineIsAlreadyEnabled, MachineDoesNotExist, 
+                MachineDescIoError,
             },
             Result
         },
@@ -96,15 +177,16 @@ pub mod pallet {
     pub struct Pallet<T>(_);
 
 
-    /// Configure the pallet by specifying the parameters and types on which it depends.
+    /// Configuration trait of this pallet.
     #[pallet::config]
     pub trait Config: frame_system::Config {
         // TODO define dependencies on other pallets...
+        // + pallet_balances::Config ???
 
         /// Because this pallet emits events, it depends on the runtime's definition of an event.
         type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
         
-        /// Currency...
+        /// Currency TODO
         type Currency: Currency<Self::AccountId>
 			+ ReservableCurrency<Self::AccountId>
 			+ LockableCurrency<Self::AccountId>
@@ -130,9 +212,9 @@ pub mod pallet {
     }
 
     
-    // The pallet's runtime storage items.
-    // https://docs.substrate.io/main-docs/build/runtime-storage/
-    /// This storage keeps all registered machines, their descriptions and states
+    /// This storage keeps all registered machines, their owners, descriptions 
+    /// and enabled-states. This is designed for active interactions with machines
+    /// on the network.
     #[pallet::storage]
     // #[pallet::getter(fn machines_of)]
     pub type Machines<T: Config> = StorageDoubleMap<_,
@@ -144,7 +226,8 @@ pub mod pallet {
             ValueQuery>;
 
     /// This storage is only a lookup table, to make sure, that each machine will be
-    /// registered only once (prevents registering same machine on different accounts)
+    /// registered only once (prevents registering same machine on different accounts).
+    /// Its purpose is not designed for interacting with machines on the network.
     #[pallet::storage]
     pub type MachineIds<T: Config> = StorageMap<_,
         Blake2_128Concat,
@@ -153,11 +236,12 @@ pub mod pallet {
         ValueQuery>;
 
     
-    // Pallets use events to inform users when important changes are made.
-    // https://docs.substrate.io/main-docs/build/events-errors/
+    /// TODO
     #[pallet::event]
     #[pallet::generate_deposit(pub(super) fn deposit_event)]
     pub enum Event<T: Config> {
+        // Example: A new staking round has started.
+		// Example \[owner, machine\]
         /// A new machine was registered on the network
         NewMachineRegistered(T::AccountId, T::MachineId),
         /// Machine has been rewarded for beeing online on the network
@@ -167,15 +251,14 @@ pub mod pallet {
     }
 
 
-    // Pallets have errors to inform users when one occured
-    // https://docs.substrate.io/main-docs/build/events-errors/
-    /// For description of error types, please have a look into module error
+    /// TODO For description of error types, please have a look into module error
     #[pallet::error]
     pub enum Error<T> {
         OwnerDoesNotExist,
         MachineNameExceedMax64,
         MachineAlreadyExists,
         MachineIsDisabled,
+        MachineIsAlreadyEnabled,
         MachineDoesNotExist,
         MachineDescIoError,
     }
@@ -187,6 +270,7 @@ pub mod pallet {
                 MachineNameExceedMax64 => Err(Error::<T>::MachineNameExceedMax64.into()),
                 MachineAlreadyExists => Err(Error::<T>::MachineAlreadyExists.into()),
                 MachineIsDisabled => Err(Error::<T>::MachineIsDisabled.into()),
+                MachineIsAlreadyEnabled => Err(Error::<T>::MachineIsAlreadyEnabled.into()),
                 MachineDoesNotExist => Err(Error::<T>::MachineDoesNotExist.into()),
                 MachineDescIoError => Err(Error::<T>::MachineDescIoError.into()),
             }
@@ -266,6 +350,20 @@ pub mod pallet {
             Self::get_available_rewards(owner);
             Ok(())
         }
+
+        fn disable_machine(
+            owner: &T::AccountId,
+            machine: &T::MachineId
+        ) -> Result<()> {
+            <Self as MachineAdm<T::AccountId, T::MachineId>>::disable_machine(owner, machine)
+        }
+
+        fn enable_machine(
+            owner: &T::AccountId,
+            machine: &T::MachineId
+        ) -> Result<()> {
+            <Self as MachineAdm<T::AccountId, T::MachineId>>::enable_machine(owner, machine)
+        }
     }
 
     // See description about crate::traits::PotAdm
@@ -328,11 +426,26 @@ pub mod pallet {
             Ok(())
         }
 
+        fn enable_machine(owner: &T::AccountId, machine: &T::MachineId) -> Result<()> {
+            let mut ms = Self::get_machine(owner, machine)?;
+            if ms.enabled {
+                MorError::err(MachineIsAlreadyEnabled, machine)
+            } else {
+                ms.enabled = true;
+                <Machines<T>>::set(owner, machine, ms);
+                Ok(())
+            }
+        }
+
         fn disable_machine(owner: &T::AccountId, machine: &T::MachineId) -> Result<()> {
             let mut ms = Self::get_machine(owner, machine)?;
-            ms.enabled = false;
-            <Machines<T>>::set(owner, machine, ms);
-            Ok(())
+            if !ms.enabled {
+                MorError::err(MachineIsDisabled, machine)
+            } else {
+                ms.enabled = false;
+                <Machines<T>>::set(owner, machine, ms);
+                Ok(())
+            }
         }
 
         fn get_machine(owner: &T::AccountId, machine: &T::MachineId) -> Result<Machine> {

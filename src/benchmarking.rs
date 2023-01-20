@@ -1,4 +1,4 @@
-//! Benchmarking setup for peaq-pallet
+//! Benchmarking setup for peaq-pallet-mor.
 
 use super::*;
 
@@ -12,7 +12,7 @@ fn assert_last_event<T: Config>(generic_event: <T as Config>::Event) {
     System::<T>::assert_last_event(generic_event.into());
 }
 
-const CALLER_ACCOUNT_STR: &str = "Iredia1";
+const CALLER_ACCOUNT_STR: &str = "Peaq";
 
 benchmarks! {
     where_clause { where

@@ -1,3 +1,5 @@
+//! Runtime mockup with this pallet for testing purposes.
+
 use crate as peaq_pallet_mor;
 use frame_support::{parameter_types, PalletId};
 use frame_system as system;
