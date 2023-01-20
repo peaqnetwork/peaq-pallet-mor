@@ -1,5 +1,5 @@
-//! Unit tests for this pallet, spec definition
-//! 
+//! Unit tests for this pallet, see spec definition
+
 use frame_support::{assert_ok, assert_noop};
 use crate::{
     mock::*,
@@ -8,20 +8,24 @@ use crate::{
 };
 
 
+const ACCT: &'static str = "Micha";
+const MACHINE: [u8; 32] = *b"21676474666576474646673646376637";
+const MACHINE_NONE: [u8; 32] = *b"21676474666576474646673646376638";
+const MACHINE_DESC: &'static str = "owner_location_type_00001";
+
+
 #[test]
 fn register_new_machine_test() {
     new_test_ext().execute_with(|| {
-        let acct = "Micha";
-        let origin = account_key(acct);
-        let machine = *b"21676474666576474646673646376637";
-        let name: Vec<u8> = Vec::from("owner_location_type_00001");
+        let origin = account_key(ACCT);
+        let name: Vec<u8> = Vec::from(MACHINE_DESC);
 
         // Register new machine on the network.
         // Expect no error.
-        assert_ok!(PeaqPalletMor::register_new_machine(
+        assert_ok!(PeaqMor::register_new_machine(
             Origin::signed(origin),
             origin,
-            machine,
+            MACHINE,
             name
         ));
     });
@@ -29,48 +33,45 @@ fn register_new_machine_test() {
 
 
 #[test]
-fn fetch_machine_test() {
+fn fetch_machine_info_test() {
     new_test_ext().execute_with(|| {
-        let acct = "Micha";
-        let origin = account_key(acct);
-        let machine = *b"21676474666576474646673646376637";
-        let machine_err = *b"21676474666576474646673646376638";
-        let name: Vec<u8> = Vec::from("owner_location_type_00001");
+        let origin = account_key(ACCT);
+        let name: Vec<u8> = Vec::from(MACHINE_DESC);
 
         // Fetch a machine, but no machines are registered.
         // Expect OwnerDoesNotExist error
         assert_noop!(
-            PeaqPalletMor::fetch_machine(
+            PeaqMor::fetch_machine_info(
                 Origin::signed(origin),
                 origin,
-                machine
+                MACHINE
             ),
             Error::<Test>::OwnerDoesNotExist
         );
 
         // Register new machine for further testing.
-        assert_ok!(PeaqPalletMor::register_new_machine(
+        assert_ok!(PeaqMor::register_new_machine(
             Origin::signed(origin),
             origin,
-            machine,
+            MACHINE,
             name
         ));
 
         // Fetch registered machine.
         // Expect to be able to fetch this registered machine.
-        assert_ok!(PeaqPalletMor::fetch_machine(
+        assert_ok!(PeaqMor::fetch_machine_info(
             Origin::signed(origin),
             origin,
-            machine
+            MACHINE
         ));
 
         // Request wrong machine-ID from owner, which is registered.
         // Expect error MachineDoesNotExist
         assert_noop!(
-            PeaqPalletMor::fetch_machine(
+            PeaqMor::fetch_machine_info(
                 Origin::signed(origin),
                 origin,
-                machine_err
+                MACHINE_NONE
             ),
             Error::<Test>::MachineDoesNotExist
         );
@@ -81,53 +82,109 @@ fn fetch_machine_test() {
 #[test]
 fn get_online_rewards_test() {
     new_test_ext().execute_with(|| {
-        let acct = "Micha";
-        let origin = account_key(acct);
-        let machine = *b"21676474666576474646673646376637";
-        let machine_err = *b"21676474666576474646673646376638";
-        let name: Vec<u8> = Vec::from("owner_location_type_00001");
+        let origin = account_key(ACCT);
+        let name: Vec<u8> = Vec::from(MACHINE_DESC);
 
         // Try to collect rewards. No machines registered.
         // Expect error OwnerDoesNotExist.
         assert_noop!(
-            PeaqPalletMor::get_online_rewards(
+            PeaqMor::get_online_rewards(
                 Origin::signed(origin),
                 origin,
-                machine),
+                MACHINE),
             Error::<Test>::OwnerDoesNotExist
         );
 
         // Register new machine for further testing.
-        assert_ok!(PeaqPalletMor::register_new_machine(
+        assert_ok!(PeaqMor::register_new_machine(
             Origin::signed(origin),
             origin,
-            machine,
+            MACHINE,
             name
         ));
         
         // Try to get rewarded for wrong machine.
         // Expect error MachineDoesNotExist.
         assert_noop!(
-            PeaqPalletMor::get_online_rewards(
+            PeaqMor::get_online_rewards(
                 Origin::signed(origin),
                 origin,
-                machine_err),
+                MACHINE_NONE),
             Error::<Test>::MachineDoesNotExist
         );
 
         // Get rewards for properly registered machine.
         // Expect no errors.
-        assert_ok!(PeaqPalletMor::get_online_rewards(
+        assert_ok!(PeaqMor::get_online_rewards(
             Origin::signed(origin),
             origin,
-            machine
+            MACHINE
         ));
     });
 }
 
+
+#[test]
+fn enable_disable_machine_test() {
+    new_test_ext().execute_with(|| {
+        let origin = account_key(ACCT);
+        let name: Vec<u8> = Vec::from(MACHINE_DESC);
+
+        // Register new machine for further testing.
+        assert_ok!(PeaqMor::register_new_machine(
+            Origin::signed(origin),
+            origin,
+            MACHINE,
+            name
+        ));
+
+        // Try to enable this machine.
+        // Expect error MachineIsAlreadyEnabled.
+        assert_noop!(
+            PeaqMor::enable_machine(
+                Origin::signed(origin),
+                origin,
+                MACHINE),
+            Error::<Test>::MachineIsEnabled
+        );
+
+        // Disable machine.
+        // Expect no error.
+        assert_ok!(PeaqMor::disable_machine(
+            Origin::signed(origin),
+            origin,
+            MACHINE
+        ));
+
+        // Try to disable machine again.
+        // Expect error MachineIsDisabled.
+        assert_noop!(
+            PeaqMor::disable_machine(
+                Origin::signed(origin),
+                origin,
+                MACHINE),
+            Error::<Test>::MachineIsDisabled
+        );
+
+        // Now finally enable the machine again.
+        // Expect no error.
+        assert_ok!(PeaqMor::enable_machine(
+            Origin::signed(origin),
+            origin,
+            MACHINE
+        ));
+    });
+}
+
+
+#[test]
+fn disable_machine_test() {
+
+}
+
 // #[test]
 // fn desc_test() {
-//     let desc = MachineDesc::from_terms(
+//     let desc = MACHINEDesc::from_terms(
 //         "owner",
 //         "location",
 //         "typ",

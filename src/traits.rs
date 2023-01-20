@@ -33,13 +33,11 @@ pub trait Mor<AccountId, MachineId> {
     /// the network for a certain period of time.
     fn get_online_rewards(owner: &AccountId, machine: &MachineId) -> Result<()>;
 
-    /// Disables an existing machine. An error will be raised, if the machine does not
-    /// exist or if it is already disabled.
-    fn disable_machine(owner: &AccountId, machine: &MachineId) -> Result<()>;
+    // Implemented in MachineAdm
+    // fn disable_machine(owner: &AccountId, machine: &MachineId) -> Result<()>;
 
-    /// Enables a disabled machine. An error will be raised, if the machine is enabled. When
-    /// registering a new machine, a machine is enabled by default.
-    fn enable_machine(owner: &AccountId, machine: &MachineId) -> Result<()>;
+    // Implemented in MachineAdm
+    // fn enable_machine(owner: &AccountId, machine: &MachineId) -> Result<()>;
 }
 
 
@@ -90,6 +88,10 @@ pub trait MachineAdm<AccountId, MachineId> {
     /// Getter method for machines in storage. An error will occur if the
     /// machine or the owner doesn't exist, or if the machine is disabled.
     fn get_machine(owner: &AccountId, machine: &MachineId) -> Result<Machine>;
+
+    /// Getter method for machines, but this ones forces it. Will return
+    /// disabled machines too.
+    fn get_machine_force(owner: &AccountId, machine: &MachineId) -> Result<Machine>;
 
     /// Getter method for all machines in storage related to one account (owner).
     fn get_machines(owner: &AccountId) -> Result<Vec<Machine>>;

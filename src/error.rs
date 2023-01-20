@@ -25,7 +25,7 @@ pub enum MorErrorType {
     /// Sent when tried to access somehow a disabled machine.
     MachineIsDisabled,
     /// Sent when tried to enable a machine which is already enabled.
-    MachineIsAlreadyEnabled,
+    MachineIsEnabled,
     /// Sent when a machine does not exist under this owner.
     MachineDoesNotExist,
     /// Sent when an I/O-error occurs during MachineDesc-into-bytes transformation

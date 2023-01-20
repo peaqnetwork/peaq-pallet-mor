@@ -12,8 +12,8 @@
 //!  
 //! In this crate, the pallet is defined which implements the functionality to
 //! distribute Machine Owner Rewards (MOR). About possible rewards have a look
-//! into paragraph Rewarding. For informations about the technical architecture
-//! have a look in the description of module ```traits```.
+//! into paragraph Rewarding. For further informations about the functional 
+//! architecture have a look in the description of module ```traits```.
 //! 
 //! Please have also a look into the README of the GitHub repository.
 //! 
@@ -44,14 +44,14 @@
 //! documentation. Basic steps are:
 //! 
 //! - Define a Pot-Account for it, e.g.:
-//!     ```
+//!     ```ignore
 //!     parameter_types! {
 //!	        pub const PotMorId: PalletId = PalletId(*b"PotMchOw");
 //!     }
 //!     ```
 //! 
 //! - Configure the pallet within the runtime by defining:
-//!     ```
+//!     ```ignore
 //!     impl peaq_pallet_mor::Config for Runtime {
 //!         type Event = Event;
 //!         type Currency = Balances;
@@ -61,9 +61,21 @@
 //!     }
 //!     ```
 //! - Add pallet on list of pallets within `construct_runtime!` macro:
-//!     ```PeaqMor: peaq_pallet_mor::{Pallet, Call, Storage, Event<T>}```
+//!     ```ignore
+//!     construct_runtime! {
+//!         pub enum Runtime where
+//!             Block = Block,
+//!             NodeBlock = Block,
+//!             UncheckedExtrinsic = UncheckedExtrinsic,
+//!         {
+//!             System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
+//!             // ...
+//!             PeaqMor: peaq_pallet_mor::{Pallet, Call, Storage, Event<T>}
+//!         }
+//!     }
+//!     ```
 //! 
-//! - TODO
+//! - Implement a mechanism to fill that Pot-account `PotMorId`
 //! 
 //! ### Dispatchable Functions (Extrinsics)
 //! 
@@ -74,9 +86,12 @@
 //! - `get_online_rewards` - Machine owners can be rewarded for having their machines 
 //!     continiously online on the network.
 //! 
-//! - `fetch_machine` - Fetches a registered machine's description and its enable-state.
+//! - `fetch_machine_info` - Fetches a registered machine's description and its enable-state.
 //! 
-//! - TODO
+//! - `enable_machine` - Enables a machine after it has been disabled.
+//! 
+//! - `disable_machine` - Disables a machine on the network. Note, at the moment a machine 
+//!     cannot be deleted, so this is the way to remove a machine from the network.
 //! 
 
 #![cfg_attr(not(feature = "std"), no_std)]
@@ -124,7 +139,7 @@ pub mod pallet {
             MorError,
             MorErrorType::{
                 OwnerDoesNotExist, MachineNameExceedMax64, MachineAlreadyExists, 
-                MachineIsDisabled, MachineIsAlreadyEnabled, MachineDoesNotExist, 
+                MachineIsDisabled, MachineIsEnabled, MachineDoesNotExist, 
                 MachineDescIoError,
             },
             Result
@@ -236,29 +251,31 @@ pub mod pallet {
         ValueQuery>;
 
     
-    /// TODO
+    /// Possible Event types of this pallet.
     #[pallet::event]
     #[pallet::generate_deposit(pub(super) fn deposit_event)]
     pub enum Event<T: Config> {
-        // Example: A new staking round has started.
-		// Example \[owner, machine\]
         /// A new machine was registered on the network
         NewMachineRegistered(T::AccountId, T::MachineId),
         /// Machine has been rewarded for beeing online on the network
-        OwnerGotRewarded(T::AccountId, Balance<T>),
+        MachineOwnerRewarded(T::AccountId, Balance<T>),
         /// Machine entry was fetched
         FetchedMachineDescription(Machine),
+        /// Machine got enabled
+        MachineEnabled(T::AccountId, T::MachineId),
+        /// Machine got disabled
+        MachineDisabled(T::AccountId, T::MachineId),
     }
 
 
-    /// TODO For description of error types, please have a look into module error
+    /// For description of error types, please have a look into module error.
     #[pallet::error]
     pub enum Error<T> {
         OwnerDoesNotExist,
         MachineNameExceedMax64,
         MachineAlreadyExists,
         MachineIsDisabled,
-        MachineIsAlreadyEnabled,
+        MachineIsEnabled,
         MachineDoesNotExist,
         MachineDescIoError,
     }
@@ -270,7 +287,7 @@ pub mod pallet {
                 MachineNameExceedMax64 => Err(Error::<T>::MachineNameExceedMax64.into()),
                 MachineAlreadyExists => Err(Error::<T>::MachineAlreadyExists.into()),
                 MachineIsDisabled => Err(Error::<T>::MachineIsDisabled.into()),
-                MachineIsAlreadyEnabled => Err(Error::<T>::MachineIsAlreadyEnabled.into()),
+                MachineIsEnabled => Err(Error::<T>::MachineIsEnabled.into()),
                 MachineDoesNotExist => Err(Error::<T>::MachineDoesNotExist.into()),
                 MachineDescIoError => Err(Error::<T>::MachineDescIoError.into()),
             }
@@ -316,7 +333,7 @@ pub mod pallet {
 
         /// Fetch a machine's description.
         #[pallet::weight(T::WeightInfo::some_extrinsic())]
-        pub fn fetch_machine(
+        pub fn fetch_machine_info(
             origin: OriginFor<T>,
             owner: T::AccountId,
             machine: T::MachineId
@@ -326,6 +343,36 @@ pub mod pallet {
             dpatch_dposit!(
                 Self::get_machine(&owner, &machine),
                 Event::FetchedMachineDescription
+            )
+        }
+
+        /// Fetch a machine's description.
+        #[pallet::weight(T::WeightInfo::some_extrinsic())]
+        pub fn enable_machine(
+            origin: OriginFor<T>,
+            owner: T::AccountId,
+            machine: T::MachineId
+        ) -> DispatchResult {
+            ensure_signed(origin)?;
+
+            dpatch_dposit_par!(
+                <Self as MachineAdm<T::AccountId, T::MachineId>>::enable_machine(&owner, &machine),
+                Event::MachineEnabled(owner, machine)
+            )
+        }
+
+        /// Fetch a machine's description.
+        #[pallet::weight(T::WeightInfo::some_extrinsic())]
+        pub fn disable_machine(
+            origin: OriginFor<T>,
+            owner: T::AccountId,
+            machine: T::MachineId
+        ) -> DispatchResult {
+            ensure_signed(origin)?;
+
+            dpatch_dposit_par!(
+                <Self as MachineAdm<T::AccountId, T::MachineId>>::disable_machine(&owner, &machine),
+                Event::MachineDisabled(owner, machine)
             )
         }
     }
@@ -350,20 +397,6 @@ pub mod pallet {
             Self::get_available_rewards(owner);
             Ok(())
         }
-
-        fn disable_machine(
-            owner: &T::AccountId,
-            machine: &T::MachineId
-        ) -> Result<()> {
-            <Self as MachineAdm<T::AccountId, T::MachineId>>::disable_machine(owner, machine)
-        }
-
-        fn enable_machine(
-            owner: &T::AccountId,
-            machine: &T::MachineId
-        ) -> Result<()> {
-            <Self as MachineAdm<T::AccountId, T::MachineId>>::enable_machine(owner, machine)
-        }
     }
 
     // See description about crate::traits::PotAdm
@@ -379,7 +412,7 @@ pub mod pallet {
         ) {
             // Copied from parachain_staking::Pallet::do_reward()
             if let Ok(_success) = T::Currency::transfer(pot, who, reward, ExistenceRequirement::KeepAlive) {
-				Self::deposit_event(Event::OwnerGotRewarded(who.clone(), reward));
+				Self::deposit_event(Event::MachineOwnerRewarded(who.clone(), reward));
 			}
         }
 
@@ -427,9 +460,9 @@ pub mod pallet {
         }
 
         fn enable_machine(owner: &T::AccountId, machine: &T::MachineId) -> Result<()> {
-            let mut ms = Self::get_machine(owner, machine)?;
+            let mut ms = Self::get_machine_force(owner, machine)?;
             if ms.enabled {
-                MorError::err(MachineIsAlreadyEnabled, machine)
+                MorError::err(MachineIsEnabled, machine)
             } else {
                 ms.enabled = true;
                 <Machines<T>>::set(owner, machine, ms);
@@ -479,6 +512,19 @@ pub mod pallet {
                 MorError::err(OwnerDoesNotExist, owner)
             } else {
                 Ok(machines)
+            }
+        }
+
+        fn get_machine_force(owner: &T::AccountId, machine: &T::MachineId) -> Result<Machine> {
+            if !<Machines<T>>::contains_key(owner, machine) {
+                if <Machines<T>>::iter_prefix_values(owner).next().is_none() {
+                    MorError::err(OwnerDoesNotExist, owner)
+                } else {
+                    MorError::err(MachineDoesNotExist, machine)
+                }
+            } else {
+                let ms = <Machines<T>>::get(owner, machine);
+                Ok(ms)
             }
         }
     }
