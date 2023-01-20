@@ -13,23 +13,24 @@ use sp_std::vec::Vec;
 // };
 
 
-/// Machine struct stores information about one registered machine. The owner can setup
-/// one account for getting rewarded. A machine cannot be deleted, but be disabled instead.
+/// MachineInfo struct stores information about a registered machine. 
+/// A machine cannot be deleted, but be disabled instead. It also has a description
+/// or a name to identify it easier.
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 #[derive(
     Clone, PartialEq, Eq, Default, TypeInfo, Decode, Encode, RuntimeDebug,
 )]
-pub struct Machine {
+pub struct MachineInfo {
     /// Name of the registered machine
     pub name: Vec<u8>,
     /// Enabled flag
     pub enabled: bool,
 }
 
-impl Machine {
-    /// Returns a new Machine struct with defaults and given name
-    pub fn new(name: &Vec<u8>) -> Machine {
-        Machine{ name: name.clone(), enabled: true }
+impl MachineInfo {
+    /// Returns a new MachineInfo struct with defaults and given name
+    pub fn new(name: &Vec<u8>) -> MachineInfo {
+        MachineInfo{ name: name.clone(), enabled: true }
     }
 }
 

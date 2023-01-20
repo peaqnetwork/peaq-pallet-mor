@@ -41,7 +41,11 @@ pub trait Mor<AccountId, MachineId> {
 }
 
 
-/// Trait defines behaviour of Pot- and Reward-Mechanism
+/// Trait defines behaviour of Pot- and Reward-Mechanism. This enables the pallet
+/// to send a reward in form of balance to an machine owner. There is also the
+/// possibility to get rewarded for registering a new machine or for having a
+/// machine online after a certain period of time. It manages also the distribution
+/// of rewards from the pot-account to the machine owner accounts.
 pub trait PotAdm<AccountId, Balance> {
     /// Get a unique, inaccessible account id from the `PotId`.
 	fn account_id() -> AccountId;
@@ -87,12 +91,12 @@ pub trait MachineAdm<AccountId, MachineId> {
 
     /// Getter method for machines in storage. An error will occur if the
     /// machine or the owner doesn't exist, or if the machine is disabled.
-    fn get_machine(owner: &AccountId, machine: &MachineId) -> Result<Machine>;
+    fn get_machine_info(owner: &AccountId, machine: &MachineId) -> Result<MachineInfo>;
 
     /// Getter method for machines, but this ones forces it. Will return
     /// disabled machines too.
-    fn get_machine_force(owner: &AccountId, machine: &MachineId) -> Result<Machine>;
+    fn get_machine_info_f(owner: &AccountId, machine: &MachineId) -> Result<MachineInfo>;
 
     /// Getter method for all machines in storage related to one account (owner).
-    fn get_machines(owner: &AccountId) -> Result<Vec<Machine>>;
+    fn get_machine_infos(owner: &AccountId) -> Result<Vec<MachineInfo>>;
 }

@@ -237,7 +237,7 @@ pub mod pallet {
             T::AccountId,
             Blake2_128Concat,
             T::MachineId,
-            Machine,
+            MachineInfo,
             ValueQuery>;
 
     /// This storage is only a lookup table, to make sure, that each machine will be
@@ -260,7 +260,7 @@ pub mod pallet {
         /// Machine has been rewarded for beeing online on the network
         MachineOwnerRewarded(T::AccountId, Balance<T>),
         /// Machine entry was fetched
-        FetchedMachineDescription(Machine),
+        FetchedMachineDescription(MachineInfo),
         /// Machine got enabled
         MachineEnabled(T::AccountId, T::MachineId),
         /// Machine got disabled
@@ -341,7 +341,7 @@ pub mod pallet {
             ensure_signed(origin)?;
 
             dpatch_dposit!(
-                Self::get_machine(&owner, &machine),
+                Self::get_machine_info(&owner, &machine),
                 Event::FetchedMachineDescription
             )
         }
@@ -393,7 +393,7 @@ pub mod pallet {
             owner: &T::AccountId,
             machine: &T::MachineId
         ) -> Result<()> {
-            Self::get_machine(owner, machine)?;
+            Self::get_machine_info(owner, machine)?;
             Self::get_available_rewards(owner);
             Ok(())
         }
@@ -442,7 +442,7 @@ pub mod pallet {
                 return MorError::err(MachineAlreadyExists, machine)
             }
 
-            <Machines<T>>::insert(owner, machine, Machine::new(name));
+            <Machines<T>>::insert(owner, machine, MachineInfo::new(name));
             <MachineIds<T>>::insert(machine, ());
 
             Ok(())
@@ -453,14 +453,14 @@ pub mod pallet {
             new_owner: &T::AccountId,
             machine: &T::MachineId
         ) -> Result<()> {
-            let ms = Self::get_machine(owner, machine)?;
+            let ms = Self::get_machine_info(owner, machine)?;
             <Machines<T>>::remove(owner, machine);
             <Machines<T>>::insert(new_owner, machine, ms);
             Ok(())
         }
 
         fn enable_machine(owner: &T::AccountId, machine: &T::MachineId) -> Result<()> {
-            let mut ms = Self::get_machine_force(owner, machine)?;
+            let mut ms = Self::get_machine_info_f(owner, machine)?;
             if ms.enabled {
                 MorError::err(MachineIsEnabled, machine)
             } else {
@@ -471,7 +471,7 @@ pub mod pallet {
         }
 
         fn disable_machine(owner: &T::AccountId, machine: &T::MachineId) -> Result<()> {
-            let mut ms = Self::get_machine(owner, machine)?;
+            let mut ms = Self::get_machine_info(owner, machine)?;
             if !ms.enabled {
                 MorError::err(MachineIsDisabled, machine)
             } else {
@@ -481,7 +481,7 @@ pub mod pallet {
             }
         }
 
-        fn get_machine(owner: &T::AccountId, machine: &T::MachineId) -> Result<Machine> {
+        fn get_machine_info(owner: &T::AccountId, machine: &T::MachineId) -> Result<MachineInfo> {
             if !<Machines<T>>::contains_key(owner, machine) {
                 if <Machines<T>>::iter_prefix_values(owner).next().is_none() {
                     MorError::err(OwnerDoesNotExist, owner)
@@ -498,9 +498,9 @@ pub mod pallet {
             }
         }
 
-        fn get_machines(
+        fn get_machine_infos(
             owner: &T::AccountId
-        ) -> Result<Vec<Machine>> {
+        ) -> Result<Vec<MachineInfo>> {
             let owned_machines = <Machines<T>>::iter_prefix_values(owner);
             let mut machines = Vec::new();
             owned_machines.for_each(|m| {
@@ -515,7 +515,10 @@ pub mod pallet {
             }
         }
 
-        fn get_machine_force(owner: &T::AccountId, machine: &T::MachineId) -> Result<Machine> {
+        fn get_machine_info_f(
+            owner: &T::AccountId,
+            machine: &T::MachineId
+        ) -> Result<MachineInfo> {
             if !<Machines<T>>::contains_key(owner, machine) {
                 if <Machines<T>>::iter_prefix_values(owner).next().is_none() {
                     MorError::err(OwnerDoesNotExist, owner)
