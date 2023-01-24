@@ -23,6 +23,8 @@ pub enum MorError {
     NameExceedMaxChar,
     /// Sent when an unexpected Peaq-DID error occurs.
     UnexpectedDidError,
+    /// Sent when there are not enough tokens to withdrawel from the pot.
+    UnsufficientTokensInPot,
 }
 
 

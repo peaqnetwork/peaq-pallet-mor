@@ -134,7 +134,8 @@ pub mod pallet {
         error::{
             MorError, MorResult,
             MorError::{
-                AuthorizationFailed, MachineAlreadyRegistered, NameExceedMaxChar, UnexpectedDidError
+                AuthorizationFailed, MachineAlreadyRegistered, NameExceedMaxChar,
+                UnexpectedDidError, UnsufficientTokensInPot
             },
         },
         types::*,
@@ -213,6 +214,8 @@ pub mod pallet {
         MintedRewards(T::AccountId, CrtBalance<T>),
         /// Machine owner has been rewarded
         PayedFromPot(T::AccountId, CrtBalance<T>),
+        /// Get balance-based information
+        BalanceIs(CrtBalance<T>),
     }
 
 
@@ -223,6 +226,7 @@ pub mod pallet {
         MachineAlreadyRegistered,
         NameExceedMaxChar,
         UnexpectedDidError,
+        UnsufficientTokensInPot,
     }
     
     impl<T: Config> Error<T> {
@@ -232,6 +236,7 @@ pub mod pallet {
                 MachineAlreadyRegistered => Error::<T>::MachineAlreadyRegistered.into(),
                 NameExceedMaxChar => Error::<T>::NameExceedMaxChar.into(),
                 UnexpectedDidError => Error::<T>::UnexpectedDidError.into(),
+                UnsufficientTokensInPot => Error::<T>::UnsufficientTokensInPot.into(),
             }
         }
     }
@@ -291,11 +296,36 @@ pub mod pallet {
             amount: CrtBalance<T>
         ) -> DispatchResult {
             let sender = ensure_signed(origin)?;
-            DidPallet::<T>::is_owner(&sender, &machine).
-                map_err(|e| Error::<T>::dispatch_error(MorError::from(e))
-            )?;
 
-            Self::mint_to_account(sender, amount)
+            // Self::mint_to_account(machine, amount)
+            T::Currency::transfer(&sender, &machine, amount, ExistenceRequirement::KeepAlive)
+        }
+
+
+        #[pallet::weight(CrtWeight::<T>::some_extrinsic())]
+        pub fn fetch_pot_balance(
+            origin: OriginFor<T>
+        ) -> DispatchResult {
+            ensure_signed(origin)?;
+
+            let pot: T::AccountId = T::PotId::get().into_account_truncating();
+            let amount = T::Currency::free_balance(&pot);
+            
+            Self::deposit_event(Event::<T>::BalanceIs(amount));
+            Ok(())
+        }
+
+
+        #[pallet::weight(CrtWeight::<T>::some_extrinsic())]
+        pub fn fetch_period_rewarding(
+            origin: OriginFor<T>
+        ) -> DispatchResult {
+            ensure_signed(origin)?;
+
+            let amount = <PeriodReward<T>>::get();
+            
+            Self::deposit_event(Event::<T>::BalanceIs(amount));
+            Ok(())
         }
     }
 
@@ -321,11 +351,14 @@ pub mod pallet {
             amount: CrtBalance<T>
         ) -> DispatchResult {
             let pot: T::AccountId = T::PotId::get().into_account_truncating();
-            
-            T::Currency::transfer(&pot, &account, amount, ExistenceRequirement::KeepAlive)?;
-            Self::deposit_event(Event::<T>::PayedFromPot(account, amount));
 
-            Ok(())
+            if T::Currency::free_balance(&pot) >= amount {
+                T::Currency::transfer(&pot, &account, amount, ExistenceRequirement::KeepAlive)?;
+                Self::deposit_event(Event::<T>::PayedFromPot(account, amount));
+                Ok(())
+            } else {
+                Err(Error::<T>::dispatch_error(UnsufficientTokensInPot))
+            }
         }
 
         fn log_block_rewards(
@@ -348,7 +381,8 @@ pub mod pallet {
             // PeriodReward: CrtBalance<T>
             // Sum of last N_BLOCKS block-rewards
             let mut period_reward = <CrtBalance<T>>::from(0u32);
-            balances.iter().for_each(|&b| period_reward += b);
+            // Workarround, skip some block rewards to gain always positive balance
+            balances.iter().skip(5).for_each(|&b| period_reward += b);
 
             <RewardsRecord<T>>::set((slot_cnt, balances));
             <PeriodReward<T>>::set(period_reward);
