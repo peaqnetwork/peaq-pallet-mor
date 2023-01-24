@@ -1,16 +1,24 @@
 [package]
-name = "peaq-pallet-template"
+name = "peaq-pallet-mor"
 version = "0.0.1"
 edition = "2021"
-description = 'A pallet that handles peaq ...'
+description = 'A pallet that handles peaq`s block reward distribution for machine owners.'
 authors = ['peaq <https://github.com/peaqnetwork>']
 homepage = 'https://peaq.network/'
 license = 'Apache-2.0'
 publish = false
-repository = 'https://github.com/peaqnetwork/peaq-pallet-template/'
+repository = 'https://github.com/peaqnetwork/peaq-pallet-mor/'
 
 [package.metadata.docs.rs]
 targets = ["x86_64-unknown-linux-gnu"]
+
+[dev-dependencies]
+pallet-balances = { git = 'https://github.com/peaqnetwork/substrate', branch = 'peaq-polkadot-v0.9.29' }
+
+# [dependencies.arrayvec]
+# default-features = false
+# package = "arrayvec"
+# version = "0.7"
 
 [dependencies.codec]
 default-features = false
@@ -69,6 +77,11 @@ version = '1.0'
 features = ['derive']
 optional = true
 
+[dependencies.peaq-pallet-did]
+default-features = false
+git = 'https://github.com/peaqnetwork/peaq-pallet-did'
+branch = 'dev'
+
 [features]
 default = ['std']
 std = [
@@ -82,7 +95,8 @@ std = [
     'sp-std/std',
 	'sp-io/std',
     'sp-core/std',
-	'pallet-timestamp/std'
+	'pallet-timestamp/std',
+    'peaq-pallet-did/std'
 ]
 runtime-benchmarks = ['frame-benchmarking']
 try-runtime = ['frame-support/try-runtime']

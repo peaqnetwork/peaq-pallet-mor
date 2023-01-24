@@ -1,27 +1,39 @@
-//! This module defines the pallet's error and result types
+//! Encapsules all error types and relevant methods of this pallet.
 
 use codec::{Decode, Encode};
-// use frame_support::pallet_prelude::*;
+use peaq_pallet_did::did::DidError;
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
 
 
-/// Result definition for this pallet with unique error type
-pub type Result<T> = core::result::Result<T, PalletError>;
+/// Result definition for this pallet with unique error type to simplify coding.
+pub type MorResult<T> = core::result::Result<T, MorError>;
 
-/// This enum defines the basic type of error for this pallet
+
+/// This enum defines the all types of possible errors of this pallet. Have a
+/// look on the descriptions of each error state.
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
-#[derive(Debug, Encode, Decode)]
-pub enum PalletErrorType {
-    /// Sent when something happens
-    SomeError
+#[derive(Debug, PartialEq, Eq, Encode, Decode)]
+pub enum MorError {
+    /// Sent when given machine ID is already registered.
+    MachineAlreadyRegistered,
+    /// Sent when authorization fails in Peaq-DID.
+    AuthorizationFailed,
+    /// Sent when name exceeds maximum length.
+    NameExceedMaxChar,
+    /// Sent when an unexpected Peaq-DID error occurs.
+    UnexpectedDidError,
+    /// Sent when there are not enough tokens to withdrawel from the pot.
+    UnsufficientTokensInPot,
 }
 
 
-/// This struct...
-#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
-#[derive(Debug, Encode, Decode)]
-pub struct PalletError {
-    /// Type of error
-    pub typ: PalletErrorType,
+impl From<DidError> for MorError {
+    fn from(err: DidError) -> Self {
+        match err {
+            DidError::NameExceedMaxChar => MorError::NameExceedMaxChar,
+            DidError::AuthorizationFailed => MorError::AuthorizationFailed,
+            _ => MorError::UnexpectedDidError
+        }
+    }
 }
