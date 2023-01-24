@@ -120,17 +120,14 @@ pub mod pallet {
         PalletId,
         traits::{
             Currency, ExistenceRequirement, Get, LockableCurrency, ReservableCurrency
-            // OnTimestampSet, tokens::Balance
         },
     };
-    use sp_std::vec::Vec;
+    use sp_std::{vec, vec::Vec};
     use sp_runtime::traits::AccountIdConversion;
 
-    // use peaq_pallet_did as PeaqDid;
     use peaq_pallet_did::{
         Pallet as DidPallet,
-        // Error as DidPalletErr,
-        did::Did, //{, DidError}
+        did::Did,
     };
 
     use crate::{
