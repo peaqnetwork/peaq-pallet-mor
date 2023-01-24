@@ -110,8 +110,8 @@ mod tests;
 mod benchmarking;
 
 pub mod error;
-pub mod traits;
-pub mod structs;
+pub mod mor;
+pub mod types;
 
 pub mod weights;
 pub use weights::WeightInfo;
@@ -119,59 +119,62 @@ pub use weights::WeightInfo;
 #[frame_support::pallet]
 pub mod pallet {
 
-    use codec::MaxEncodedLen;
+    // use codec::MaxEncodedLen;
     use frame_system::pallet_prelude::*;
     use frame_support::{
         pallet_prelude::*,
         PalletId,
         traits::{
-            Currency, ExistenceRequirement, Get, LockableCurrency, ReservableCurrency
+            Currency, ExistenceRequirement, Get, LockableCurrency, ReservableCurrency, //, Time as MomentTime
+            Imbalance
         }
     };
-    use sp_runtime::traits::{AccountIdConversion, CheckedSub, Zero};
-    use sp_std::{
-        fmt::Debug,
-        vec::Vec,
+    use sp_runtime::traits::{AccountIdConversion};
+    // use sp_std::vec::Vec;
+
+    use peaq_pallet_did as PeaqDid;
+    use peaq_pallet_did::{
+        Pallet as DidPallet,
+        Error as DidPalletErr,
+        did::{Did, DidError}
     };
 
     use crate::{
-        error::{
-            MorError,
-            MorErrorType::{
-                OwnerDoesNotExist, MachineNameExceedMax64, MachineAlreadyExists, 
-                MachineIsDisabled, MachineIsEnabled, MachineDoesNotExist, 
-                MachineDescIoError,
-            },
-            Result
-        },
-        structs::*,
-        traits::*,
+        // error::{
+        //     MorError,
+        //     MorErrorType::{
+        //         AuthorizationFailed, MachineNameExceedMax64, UnexpectedDidError
+        //     },
+        //     Result
+        // },
+        types::*,
+        mor::*,
         weights::WeightInfo,
     };
 
 
-    macro_rules! dpatch {
-        ($res:expr) => {
-            match $res {
-                Ok(_d) => {
-                    Ok(())
-                }
-                Err(e) => Error::<T>::dispatch_error(e),
-            }
-        };
-    }
+    // macro_rules! dpatch {
+    //     ($res:expr) => {
+    //         match $res {
+    //             Ok(_d) => {
+    //                 Ok(())
+    //             }
+    //             Err(e) => Error::<T>::dispatch_error(e),
+    //         }
+    //     };
+    // }
 
-    macro_rules! dpatch_dposit {
-        ($res:expr, $event:expr) => {
-            match $res {
-                Ok(d) => {
-                    Self::deposit_event($event(d));
-                    Ok(())
-                }
-                Err(e) => Error::<T>::dispatch_error(e),
-            }
-        };
-    }
+    // macro_rules! dpatch_dposit {
+    //     ($res:expr, $event:expr) => {
+    //         match $res {
+    //             Ok(d) => {
+    //                 Self::deposit_event($event(d));
+    //                 Ok(())
+    //             }
+    //             Err(e) => Error::<T>::dispatch_error(e),
+    //         }
+    //     };
+    // }
 
     macro_rules! dpatch_dposit_par {
         ($res:expr, $event:expr) => {
@@ -180,7 +183,7 @@ pub mod pallet {
                     Self::deposit_event($event);
                     Ok(())
                 }
-                Err(e) => Error::<T>::dispatch_error(e),
+                Err(e) => did_dispatch_error(e),
             }
         };
     }
@@ -194,102 +197,85 @@ pub mod pallet {
 
     /// Configuration trait of this pallet.
     #[pallet::config]
-    pub trait Config: frame_system::Config {
-        // TODO define dependencies on other pallets...
-        // + pallet_balances::Config ???
-
+    pub trait Config: frame_system::Config + peaq_pallet_did::Config {
         /// Because this pallet emits events, it depends on the runtime's definition of an event.
         type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
         
-        /// Currency TODO
+        /// Currency description TODO
         type Currency: Currency<Self::AccountId>
 			+ ReservableCurrency<Self::AccountId>
 			+ LockableCurrency<Self::AccountId>
-			+ Eq;
+			+ Eq
+            + From<u128>;
 
         /// Account Identifier from which the internal Pot is generated.
 		#[pallet::constant]
 		type PotId: Get<PalletId>;
-        
-        /// Machines are getting identified by an ID type
-        type MachineId: Parameter
-            + Member
-            + MaybeSerializeDeserialize
-            + Debug
-            + Ord
-            + Clone
-            + Copy
-            + MaxEncodedLen
-            + Default;
         
         /// Weight information for extrinsics in this pallet.
         type WeightInfo: WeightInfo;
     }
 
     
-    /// This storage keeps all registered machines, their owners, descriptions 
-    /// and enabled-states. This is designed for active interactions with machines
-    /// on the network.
-    #[pallet::storage]
-    // #[pallet::getter(fn machines_of)]
-    pub type Machines<T: Config> = StorageDoubleMap<_,
-            Blake2_128Concat,
-            T::AccountId,
-            Blake2_128Concat,
-            T::MachineId,
-            MachineInfo,
-            ValueQuery>;
-
     /// This storage is only a lookup table, to make sure, that each machine will be
     /// registered only once (prevents registering same machine on different accounts).
     /// Its purpose is not designed for interacting with machines on the network.
     #[pallet::storage]
-    pub type MachineIds<T: Config> = StorageMap<_,
-        Blake2_128Concat,
-        T::MachineId,
-        (),
-        ValueQuery>;
+    #[pallet::getter(fn machines_of)]
+    pub type MachineList<T: Config> = StorageMap<_,
+            Blake2_128Concat,
+            T::AccountId,
+            bool,
+            ValueQuery
+    >;
+
+    /// This storage keeps the current configuration of rewards, which are given to
+    /// machines and their owners. E.g. when registering a new machine, x token will
+    /// be given to the owner, this amount can be configured over here.
 
     
     /// Possible Event types of this pallet.
     #[pallet::event]
     #[pallet::generate_deposit(pub(super) fn deposit_event)]
     pub enum Event<T: Config> {
-        /// A new machine was registered on the network
-        NewMachineRegistered(T::AccountId, T::MachineId),
-        /// Machine has been rewarded for beeing online on the network
-        MachineOwnerRewarded(T::AccountId, Balance<T>),
-        /// Machine entry was fetched
-        FetchedMachineDescription(MachineInfo),
-        /// Machine got enabled
-        MachineEnabled(T::AccountId, T::MachineId),
-        /// Machine got disabled
-        MachineDisabled(T::AccountId, T::MachineId),
+        /// Machine has been rewarded
+        MintedRewards(T::AccountId, Balance<T>),
+        /// Machine owner has been rewarded
+        PayedFromPot(T::AccountId, Balance<T>),
     }
 
 
-    /// For description of error types, please have a look into module error.
-    #[pallet::error]
-    pub enum Error<T> {
-        OwnerDoesNotExist,
-        MachineNameExceedMax64,
-        MachineAlreadyExists,
-        MachineIsDisabled,
-        MachineIsEnabled,
-        MachineDoesNotExist,
-        MachineDescIoError,
-    }
+    // /// For description of error types, please have a look into module error.
+    // #[pallet::error]
+    // pub enum Error<T> {
+    //     AuthorizationFailed,
+    //     MachineNameExceedMax64,
+    //     UnexpectedDidError
+    // }
 
-    impl<T: Config> Error<T> {
-        fn dispatch_error(err: MorError) -> DispatchResult {
-            match err.typ {
-                OwnerDoesNotExist => Err(Error::<T>::OwnerDoesNotExist.into()),
-                MachineNameExceedMax64 => Err(Error::<T>::MachineNameExceedMax64.into()),
-                MachineAlreadyExists => Err(Error::<T>::MachineAlreadyExists.into()),
-                MachineIsDisabled => Err(Error::<T>::MachineIsDisabled.into()),
-                MachineIsEnabled => Err(Error::<T>::MachineIsEnabled.into()),
-                MachineDoesNotExist => Err(Error::<T>::MachineDoesNotExist.into()),
-                MachineDescIoError => Err(Error::<T>::MachineDescIoError.into()),
+    // impl<T: Config> Error<T> {
+    //     fn dispatch_error(err: MorError) -> DispatchResult {
+    //         match err.typ {
+    //             AuthorizationFailed => Err(Error::<T>::AuthorizationFailed.into()),
+    //             MachineNameExceedMax64 => Err(Error::<T>::MachineNameExceedMax64.into()),
+    //             UnexpectedDidError => Err(Error::<T>::UnexpectedDidError.into()),
+    //         }
+    //     }
+    // }
+    fn did_dispatch_error<T: PeaqDid::Config>(err: DidError) -> DispatchResult {
+        match err {
+            DidError::NotFound => Err(DidPalletErr::<T>::AttributeNotFound.into()),
+            DidError::AlreadyExist => Err(DidPalletErr::<T>::AttributeAlreadyExist.into()),
+            DidError::NameExceedMaxChar => {
+                Err(DidPalletErr::<T>::AttributeNameExceedMax64.into())
+            }
+            DidError::FailedCreate => Err(DidPalletErr::<T>::AttributeCreationFailed.into()),
+            DidError::FailedUpdate => Err(DidPalletErr::<T>::AttributeCreationFailed.into()),
+            DidError::AuthorizationFailed => {
+                Err(DidPalletErr::<T>::AttributeAuthorizationFailed.into())
+            }
+            DidError::MaxBlockNumberExceeded => {
+                Err(DidPalletErr::<T>::MaxBlockNumberExceeded.into())
             }
         }
     }
@@ -304,16 +290,14 @@ pub mod pallet {
         #[pallet::weight(T::WeightInfo::some_extrinsic())]
         pub fn register_new_machine(
             origin: OriginFor<T>,
-            owner: T::AccountId,
-            machine: T::MachineId,
-            name: Vec<u8>
+            machine: T::AccountId
         ) -> DispatchResult {
-            ensure_signed(origin)?;
+            let sender = ensure_signed(origin)?;
+            DidPallet::<T>::is_owner(&sender, &machine)
+                .map_err(|e| did_dispatch_error::<T>(e));
 
-            dpatch_dposit_par!(
-                <Self as Mor<T::AccountId, T::MachineId>>::register_new_machine(&owner, &machine, &name),
-                Event::NewMachineRegistered(owner, machine)
-            )
+            let amount = <Balance<T>>::from(100000000000000000u128);
+            Self::mint_to_account(sender, amount)
         }
 
         /// In this early version one can collect rewards for a machine, which has been online
@@ -321,214 +305,50 @@ pub mod pallet {
         #[pallet::weight(T::WeightInfo::some_extrinsic())]
         pub fn get_online_rewards(
             origin: OriginFor<T>,
-            owner: T::AccountId,
-            machine: T::MachineId
+            machine: T::AccountId
         ) -> DispatchResult {
-            ensure_signed(origin)?;
+            let sender = ensure_signed(origin)?;
+            DidPallet::<T>::is_owner(&sender, &machine)
+                .map_err(|e| did_dispatch_error::<T>(e));
 
-            dpatch!(
-                <Self as Mor<T::AccountId, T::MachineId>>::get_online_rewards(&owner, &machine)
-            )
+            // 1 AGNG = 1_000_000_000_000_000_000
+            let reward = Balance::<T>::from(100_000_000_000_000_000u128);
+            todo!();
+
+            Self::transfer_from_pot(sender, reward)
         }
 
-        /// Fetch a machine's description.
+        /// In this early version one can collect rewards for a machine, which has been online
+        /// on the network for a certain period of time.
         #[pallet::weight(T::WeightInfo::some_extrinsic())]
-        pub fn fetch_machine_info(
+        pub fn pay_machine_usage(
             origin: OriginFor<T>,
             owner: T::AccountId,
-            machine: T::MachineId
+            machine: T::AccountId,
+            amount: Balance<T>
         ) -> DispatchResult {
-            ensure_signed(origin)?;
+            let sender = ensure_signed(origin)?;
+            DidPallet::<T>::is_owner(&sender, &machine)
+                .map_err(|e| did_dispatch_error::<T>(e));
 
-            dpatch_dposit!(
-                Self::get_machine_info(&owner, &machine),
-                Event::FetchedMachineDescription
-            )
+            Self::mint_to_account(sender, amount)
         }
+    }
 
-        /// Fetch a machine's description.
-        #[pallet::weight(T::WeightInfo::some_extrinsic())]
-        pub fn enable_machine(
-            origin: OriginFor<T>,
-            owner: T::AccountId,
-            machine: T::MachineId
-        ) -> DispatchResult {
-            ensure_signed(origin)?;
+    impl<T: Config> MorBalance<T::AccountId, Balance<T>> for Pallet<T> {
+        fn mint_to_account(account: T::AccountId, amount: Balance<T>) -> DispatchResult {
+            let mut total_imbalance = <PositiveImbalance<T>>::zero();
 
+            // See https://substrate.recipes/currency-imbalances.html
             dpatch_dposit_par!(
-                <Self as MachineAdm<T::AccountId, T::MachineId>>::enable_machine(&owner, &machine),
-                Event::MachineEnabled(owner, machine)
+                T::Currency::deposit_into_existing(&account, amount),
+                Event::MintedRewards(account.clone(), amount)
             )
         }
 
-        /// Fetch a machine's description.
-        #[pallet::weight(T::WeightInfo::some_extrinsic())]
-        pub fn disable_machine(
-            origin: OriginFor<T>,
-            owner: T::AccountId,
-            machine: T::MachineId
-        ) -> DispatchResult {
-            ensure_signed(origin)?;
-
-            dpatch_dposit_par!(
-                <Self as MachineAdm<T::AccountId, T::MachineId>>::disable_machine(&owner, &machine),
-                Event::MachineDisabled(owner, machine)
-            )
-        }
-    }
-
-    // See description about crate::traits::Mor
-    impl<T: Config> Mor<T::AccountId, T::MachineId> for Pallet<T> {
-        fn register_new_machine(
-            owner: &T::AccountId,
-            machine: &T::MachineId,
-            name: &Vec<u8>
-        ) -> Result<()> {
-            Self::add_machine(owner, machine, name)?;
-            Self::get_registration_reward(owner);
-            Ok(())
-        }
-
-        fn get_online_rewards(
-            owner: &T::AccountId,
-            machine: &T::MachineId
-        ) -> Result<()> {
-            Self::get_machine_info(owner, machine)?;
-            Self::get_available_rewards(owner);
-            Ok(())
-        }
-    }
-
-    // See description about crate::traits::PotAdm
-    impl<T: Config> PotAdm<T::AccountId, Balance<T>> for Pallet<T> {
-        fn account_id() -> T::AccountId {
-			T::PotId::get().into_account_truncating()
-		}
-
-        fn do_reward(
-            pot: &T::AccountId,
-            who: &T::AccountId,
-            reward: Balance<T>
-        ) {
-            // Copied from parachain_staking::Pallet::do_reward()
-            if let Ok(_success) = T::Currency::transfer(pot, who, reward, ExistenceRequirement::KeepAlive) {
-				Self::deposit_event(Event::MachineOwnerRewarded(who.clone(), reward));
-			}
-        }
-
-        fn get_available_rewards(owner: &T::AccountId) {
-            let pot = Self::account_id();
-            let issue_number = T::Currency::free_balance(&pot)
-                .checked_sub(&T::Currency::minimum_balance())
-                .unwrap_or_else(Zero::zero);
-            Self::do_reward(&pot, &owner, issue_number);
-        }
-
-        fn get_registration_reward(owner: &T::AccountId) {
-            Self::get_available_rewards(owner);
-        }
-    }
-
-    // For method's description have a look at crate::traits::MachineAdm
-    impl<T: Config> MachineAdm<T::AccountId, T::MachineId> for Pallet<T> {
-        fn add_machine(
-            owner: &T::AccountId,
-            machine: &T::MachineId,
-            name: &Vec<u8>
-        ) -> Result<()> {
-            // First we check if this machine ID already exists in MachineIds storage,
-            // to prevent that one machine will be registered in multiple accounts.
-            if <MachineIds<T>>::contains_key(machine) {
-                return MorError::err(MachineAlreadyExists, machine)
-            }
-
-            <Machines<T>>::insert(owner, machine, MachineInfo::new(name));
-            <MachineIds<T>>::insert(machine, ());
-
-            Ok(())
-        }
-
-        fn update_account(
-            owner: &T::AccountId,
-            new_owner: &T::AccountId,
-            machine: &T::MachineId
-        ) -> Result<()> {
-            let ms = Self::get_machine_info(owner, machine)?;
-            <Machines<T>>::remove(owner, machine);
-            <Machines<T>>::insert(new_owner, machine, ms);
-            Ok(())
-        }
-
-        fn enable_machine(owner: &T::AccountId, machine: &T::MachineId) -> Result<()> {
-            let mut ms = Self::get_machine_info_f(owner, machine)?;
-            if ms.enabled {
-                MorError::err(MachineIsEnabled, machine)
-            } else {
-                ms.enabled = true;
-                <Machines<T>>::set(owner, machine, ms);
-                Ok(())
-            }
-        }
-
-        fn disable_machine(owner: &T::AccountId, machine: &T::MachineId) -> Result<()> {
-            let mut ms = Self::get_machine_info(owner, machine)?;
-            if !ms.enabled {
-                MorError::err(MachineIsDisabled, machine)
-            } else {
-                ms.enabled = false;
-                <Machines<T>>::set(owner, machine, ms);
-                Ok(())
-            }
-        }
-
-        fn get_machine_info(owner: &T::AccountId, machine: &T::MachineId) -> Result<MachineInfo> {
-            if !<Machines<T>>::contains_key(owner, machine) {
-                if <Machines<T>>::iter_prefix_values(owner).next().is_none() {
-                    MorError::err(OwnerDoesNotExist, owner)
-                } else {
-                    MorError::err(MachineDoesNotExist, machine)
-                }
-            } else {
-                let ms = <Machines<T>>::get(owner, machine);
-                if ms.enabled {
-                    Ok(ms)
-                } else {
-                    MorError::err(MachineIsDisabled, machine)
-                }
-            }
-        }
-
-        fn get_machine_infos(
-            owner: &T::AccountId
-        ) -> Result<Vec<MachineInfo>> {
-            let owned_machines = <Machines<T>>::iter_prefix_values(owner);
-            let mut machines = Vec::new();
-            owned_machines.for_each(|m| {
-                if m.enabled {
-                    machines.push(m.clone())
-                }
-            });
-            if machines.is_empty() {
-                MorError::err(OwnerDoesNotExist, owner)
-            } else {
-                Ok(machines)
-            }
-        }
-
-        fn get_machine_info_f(
-            owner: &T::AccountId,
-            machine: &T::MachineId
-        ) -> Result<MachineInfo> {
-            if !<Machines<T>>::contains_key(owner, machine) {
-                if <Machines<T>>::iter_prefix_values(owner).next().is_none() {
-                    MorError::err(OwnerDoesNotExist, owner)
-                } else {
-                    MorError::err(MachineDoesNotExist, machine)
-                }
-            } else {
-                let ms = <Machines<T>>::get(owner, machine);
-                Ok(ms)
-            }
+        fn transfer_from_pot(account: T::AccountId, amount: Balance<T>) -> DispatchResult {
+            let pot: T::AccountId = T::PotId::get().into_account_truncating();
+            T::Currency::transfer(pot, &account, amount, ExistenceRequirement::KeepAlive)
         }
     }
 

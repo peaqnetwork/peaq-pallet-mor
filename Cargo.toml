@@ -77,6 +77,11 @@ version = '1.0'
 features = ['derive']
 optional = true
 
+[dependencies.peaq-pallet-did]
+default-features = false
+git = 'https://github.com/peaqnetwork/peaq-pallet-did'
+branch = 'dev'
+
 [features]
 default = ['std']
 std = [
@@ -90,7 +95,8 @@ std = [
     'sp-std/std',
 	'sp-io/std',
     'sp-core/std',
-	'pallet-timestamp/std'
+	'pallet-timestamp/std',
+    'peaq-pallet-did/std'
 ]
 runtime-benchmarks = ['frame-benchmarking']
 try-runtime = ['frame-support/try-runtime']
