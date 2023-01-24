@@ -8,11 +8,24 @@
 
 use frame_support::pallet_prelude::DispatchResult;
 
-// use crate::types::AmountType;
+use crate::error::MorResult;
 
 
+/// TODO
 pub trait MorBalance<AccountId, Balance> {
+    /// TODO
     fn mint_to_account(account: AccountId, amount: Balance) -> DispatchResult;
 
+    /// TODO
     fn transfer_from_pot(account: AccountId, amount: Balance) -> DispatchResult;
+
+    /// TODO
+    fn log_block_rewards(amount: Balance);
+}
+
+
+/// TODO
+pub trait MorMachine<AccountId> {
+    /// TODO
+    fn register_machine(account: &AccountId) -> MorResult<()>;
 }

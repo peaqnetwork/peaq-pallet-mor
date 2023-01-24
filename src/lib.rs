@@ -86,12 +86,7 @@
 //! - `get_online_rewards` - Machine owners can be rewarded for having their machines 
 //!     continiously online on the network.
 //! 
-//! - `fetch_machine_info` - Fetches a registered machine's description and its enable-state.
-//! 
-//! - `enable_machine` - Enables a machine after it has been disabled.
-//! 
-//! - `disable_machine` - Disables a machine on the network. Note, at the moment a machine 
-//!     cannot be deleted, so this is the way to remove a machine from the network.
+//! - `pay_machine_usage` - TODO
 //! 
 
 #![cfg_attr(not(feature = "std"), no_std)]
@@ -119,74 +114,41 @@ pub use weights::WeightInfo;
 #[frame_support::pallet]
 pub mod pallet {
 
-    // use codec::MaxEncodedLen;
     use frame_system::pallet_prelude::*;
     use frame_support::{
         pallet_prelude::*,
         PalletId,
         traits::{
-            Currency, ExistenceRequirement, Get, LockableCurrency, ReservableCurrency, //, Time as MomentTime
-            Imbalance
-        }
+            Currency, ExistenceRequirement, Get, LockableCurrency, ReservableCurrency
+            // OnTimestampSet, tokens::Balance
+        },
     };
-    use sp_runtime::traits::{AccountIdConversion};
-    // use sp_std::vec::Vec;
+    use sp_std::vec::Vec;
+    use sp_runtime::traits::AccountIdConversion;
 
-    use peaq_pallet_did as PeaqDid;
+    // use peaq_pallet_did as PeaqDid;
     use peaq_pallet_did::{
         Pallet as DidPallet,
-        Error as DidPalletErr,
-        did::{Did, DidError}
+        // Error as DidPalletErr,
+        did::Did, //{, DidError}
     };
 
     use crate::{
-        // error::{
-        //     MorError,
-        //     MorErrorType::{
-        //         AuthorizationFailed, MachineNameExceedMax64, UnexpectedDidError
-        //     },
-        //     Result
-        // },
+        error::{
+            MorError, MorResult,
+            MorError::{
+                AuthorizationFailed, MachineAlreadyRegistered, NameExceedMaxChar, UnexpectedDidError
+            },
+        },
         types::*,
         mor::*,
         weights::WeightInfo,
     };
 
+    // Temporary constant, which defines how much blocks are generated to define
+    // the period of time, which a machine has to be online to get rewarded
+    const N_BLOCKS: usize = 200;
 
-    // macro_rules! dpatch {
-    //     ($res:expr) => {
-    //         match $res {
-    //             Ok(_d) => {
-    //                 Ok(())
-    //             }
-    //             Err(e) => Error::<T>::dispatch_error(e),
-    //         }
-    //     };
-    // }
-
-    // macro_rules! dpatch_dposit {
-    //     ($res:expr, $event:expr) => {
-    //         match $res {
-    //             Ok(d) => {
-    //                 Self::deposit_event($event(d));
-    //                 Ok(())
-    //             }
-    //             Err(e) => Error::<T>::dispatch_error(e),
-    //         }
-    //     };
-    // }
-
-    macro_rules! dpatch_dposit_par {
-        ($res:expr, $event:expr) => {
-            match $res {
-                Ok(_d) => {
-                    Self::deposit_event($event);
-                    Ok(())
-                }
-                Err(e) => did_dispatch_error(e),
-            }
-        };
-    }
 
 
     #[pallet::pallet]
@@ -205,8 +167,7 @@ pub mod pallet {
         type Currency: Currency<Self::AccountId>
 			+ ReservableCurrency<Self::AccountId>
 			+ LockableCurrency<Self::AccountId>
-			+ Eq
-            + From<u128>;
+			+ Eq;
 
         /// Account Identifier from which the internal Pot is generated.
 		#[pallet::constant]
@@ -222,16 +183,29 @@ pub mod pallet {
     /// Its purpose is not designed for interacting with machines on the network.
     #[pallet::storage]
     #[pallet::getter(fn machines_of)]
-    pub type MachineList<T: Config> = StorageMap<_,
-            Blake2_128Concat,
-            T::AccountId,
-            bool,
-            ValueQuery
+    pub type Machines<T: Config> = StorageMap<_,
+        Blake2_128Concat,
+        T::AccountId,
+        bool,
+        ValueQuery
     >;
 
-    /// This storage keeps the current configuration of rewards, which are given to
-    /// machines and their owners. E.g. when registering a new machine, x token will
-    /// be given to the owner, this amount can be configured over here.
+    /// TODO
+    #[pallet::storage]
+    #[pallet::getter(fn rewards_record_of)]
+    pub type RewardsRecord<T: Config> = StorageValue<_,
+        (u8, Vec<CrtBalance<T>>),
+        ValueQuery
+    >;
+
+    // TODO 
+    #[pallet::storage]
+    #[pallet::getter(fn period_reward_of)]
+    pub type PeriodReward<T: Config> = StorageValue<_,
+        CrtBalance<T>,
+        ValueQuery
+    >;
+    
 
     
     /// Possible Event types of this pallet.
@@ -239,43 +213,28 @@ pub mod pallet {
     #[pallet::generate_deposit(pub(super) fn deposit_event)]
     pub enum Event<T: Config> {
         /// Machine has been rewarded
-        MintedRewards(T::AccountId, Balance<T>),
+        MintedRewards(T::AccountId, CrtBalance<T>),
         /// Machine owner has been rewarded
-        PayedFromPot(T::AccountId, Balance<T>),
+        PayedFromPot(T::AccountId, CrtBalance<T>),
     }
 
 
-    // /// For description of error types, please have a look into module error.
-    // #[pallet::error]
-    // pub enum Error<T> {
-    //     AuthorizationFailed,
-    //     MachineNameExceedMax64,
-    //     UnexpectedDidError
-    // }
-
-    // impl<T: Config> Error<T> {
-    //     fn dispatch_error(err: MorError) -> DispatchResult {
-    //         match err.typ {
-    //             AuthorizationFailed => Err(Error::<T>::AuthorizationFailed.into()),
-    //             MachineNameExceedMax64 => Err(Error::<T>::MachineNameExceedMax64.into()),
-    //             UnexpectedDidError => Err(Error::<T>::UnexpectedDidError.into()),
-    //         }
-    //     }
-    // }
-    fn did_dispatch_error<T: PeaqDid::Config>(err: DidError) -> DispatchResult {
-        match err {
-            DidError::NotFound => Err(DidPalletErr::<T>::AttributeNotFound.into()),
-            DidError::AlreadyExist => Err(DidPalletErr::<T>::AttributeAlreadyExist.into()),
-            DidError::NameExceedMaxChar => {
-                Err(DidPalletErr::<T>::AttributeNameExceedMax64.into())
-            }
-            DidError::FailedCreate => Err(DidPalletErr::<T>::AttributeCreationFailed.into()),
-            DidError::FailedUpdate => Err(DidPalletErr::<T>::AttributeCreationFailed.into()),
-            DidError::AuthorizationFailed => {
-                Err(DidPalletErr::<T>::AttributeAuthorizationFailed.into())
-            }
-            DidError::MaxBlockNumberExceeded => {
-                Err(DidPalletErr::<T>::MaxBlockNumberExceeded.into())
+    /// For description of error types, please have a look into module error.
+    #[pallet::error]
+    pub enum Error<T> {
+        AuthorizationFailed,
+        MachineAlreadyRegistered,
+        NameExceedMaxChar,
+        UnexpectedDidError,
+    }
+    
+    impl<T: Config> Error<T> {
+        fn dispatch_error(err: MorError) -> DispatchError {
+            match err {
+                AuthorizationFailed => Error::<T>::AuthorizationFailed.into(),
+                MachineAlreadyRegistered => Error::<T>::MachineAlreadyRegistered.into(),
+                NameExceedMaxChar => Error::<T>::NameExceedMaxChar.into(),
+                UnexpectedDidError => Error::<T>::UnexpectedDidError.into(),
             }
         }
     }
@@ -285,70 +244,131 @@ pub mod pallet {
     // These functions materialize as "extrinsics", which are often compared to transactions.
     // Dispatchable functions must be annotated with a weight and must return a DispatchResult.
     #[pallet::call]
-    impl<T: Config> Pallet<T> {
+    impl<T: Config> Pallet<T> 
+    where
+        CrtBalance<T>: From<u128>
+    {
         /// Registers a new machine on the network by given account-ID and machine-ID.
-        #[pallet::weight(T::WeightInfo::some_extrinsic())]
+        #[pallet::weight(CrtWeight::<T>::some_extrinsic())]
         pub fn register_new_machine(
             origin: OriginFor<T>,
             machine: T::AccountId
         ) -> DispatchResult {
             let sender = ensure_signed(origin)?;
-            DidPallet::<T>::is_owner(&sender, &machine)
-                .map_err(|e| did_dispatch_error::<T>(e));
+            DidPallet::<T>::is_owner(&sender, &machine).
+                map_err(|e| Error::<T>::dispatch_error(MorError::from(e))
+            )?;
 
-            let amount = <Balance<T>>::from(100000000000000000u128);
+            Self::register_machine(&machine).map_err(
+                Error::<T>::dispatch_error
+            )?;
+
+            // 1 AGNG = 1_000_000_000_000_000_000
+            let amount = <CrtBalance<T>>::from(100_000_000_000_000_000_u128);
             Self::mint_to_account(sender, amount)
         }
 
         /// In this early version one can collect rewards for a machine, which has been online
         /// on the network for a certain period of time.
-        #[pallet::weight(T::WeightInfo::some_extrinsic())]
+        #[pallet::weight(CrtWeight::<T>::some_extrinsic())]
         pub fn get_online_rewards(
             origin: OriginFor<T>,
             machine: T::AccountId
         ) -> DispatchResult {
             let sender = ensure_signed(origin)?;
-            DidPallet::<T>::is_owner(&sender, &machine)
-                .map_err(|e| did_dispatch_error::<T>(e));
+            DidPallet::<T>::is_owner(&sender, &machine).
+                map_err(|e| Error::<T>::dispatch_error(MorError::from(e))
+            )?;
 
-            // 1 AGNG = 1_000_000_000_000_000_000
-            let reward = Balance::<T>::from(100_000_000_000_000_000u128);
-            todo!();
+            let reward = <PeriodReward<T>>::get();
 
             Self::transfer_from_pot(sender, reward)
         }
 
         /// In this early version one can collect rewards for a machine, which has been online
         /// on the network for a certain period of time.
-        #[pallet::weight(T::WeightInfo::some_extrinsic())]
+        #[pallet::weight(CrtWeight::<T>::some_extrinsic())]
         pub fn pay_machine_usage(
             origin: OriginFor<T>,
-            owner: T::AccountId,
             machine: T::AccountId,
-            amount: Balance<T>
+            amount: CrtBalance<T>
         ) -> DispatchResult {
             let sender = ensure_signed(origin)?;
-            DidPallet::<T>::is_owner(&sender, &machine)
-                .map_err(|e| did_dispatch_error::<T>(e));
+            DidPallet::<T>::is_owner(&sender, &machine).
+                map_err(|e| Error::<T>::dispatch_error(MorError::from(e))
+            )?;
 
             Self::mint_to_account(sender, amount)
         }
     }
 
-    impl<T: Config> MorBalance<T::AccountId, Balance<T>> for Pallet<T> {
-        fn mint_to_account(account: T::AccountId, amount: Balance<T>) -> DispatchResult {
-            let mut total_imbalance = <PositiveImbalance<T>>::zero();
+    // See trait definition for further details
+    impl<T: Config> MorBalance<T::AccountId, CrtBalance<T>> for Pallet<T> {
+        fn mint_to_account(
+            account: T::AccountId,
+            amount: CrtBalance<T>
+        ) -> DispatchResult {
+            // let mut total_imbalance = <CrtPosImbalance<T>>::zero();
 
             // See https://substrate.recipes/currency-imbalances.html
-            dpatch_dposit_par!(
-                T::Currency::deposit_into_existing(&account, amount),
-                Event::MintedRewards(account.clone(), amount)
-            )
+            T::Currency::deposit_into_existing(&account, amount)?;
+            Self::deposit_event(Event::<T>::MintedRewards(account, amount));
+            // total_imbalance.maybe_subsume(r);
+            // T::Reward::on_unbalanced(total_imbalance);
+            
+            Ok(())
         }
 
-        fn transfer_from_pot(account: T::AccountId, amount: Balance<T>) -> DispatchResult {
+        fn transfer_from_pot(
+            account: T::AccountId,
+            amount: CrtBalance<T>
+        ) -> DispatchResult {
             let pot: T::AccountId = T::PotId::get().into_account_truncating();
-            T::Currency::transfer(pot, &account, amount, ExistenceRequirement::KeepAlive)
+            
+            T::Currency::transfer(&pot, &account, amount, ExistenceRequirement::KeepAlive)?;
+            Self::deposit_event(Event::<T>::PayedFromPot(account, amount));
+
+            Ok(())
+        }
+
+        fn log_block_rewards(
+            amount: CrtBalance<T>
+        ) {
+            if !<RewardsRecord<T>>::exists() {
+                // Do initial setup - Genesis??
+                <RewardsRecord<T>>::set((1u8, vec![<CrtBalance<T>>::from(0u32); N_BLOCKS]));
+            }
+
+            // RewardsRecord: (u8, [CrtBalance<T>; N_BLOCKS])
+            // Next array-slot to write in, Array of imbalances
+            let (mut slot_cnt, mut balances) = <RewardsRecord<T>>::get();
+            balances[slot_cnt as usize] = amount;
+            slot_cnt += 1;
+            if slot_cnt as usize >= N_BLOCKS {
+                slot_cnt = 0;
+            }
+
+            // PeriodReward: CrtBalance<T>
+            // Sum of last N_BLOCKS block-rewards
+            let mut period_reward = <CrtBalance<T>>::from(0u32);
+            balances.iter().for_each(|&b| period_reward += b);
+
+            <RewardsRecord<T>>::set((slot_cnt, balances));
+            <PeriodReward<T>>::set(period_reward);
+        }
+    }
+
+    // See trait definition for further details
+    impl<T: Config> MorMachine<T::AccountId> for Pallet<T> {
+        fn register_machine(
+            account: &T::AccountId
+        ) -> MorResult<()> {
+            if <Machines<T>>::contains_key(account) {
+                Err(MorError::MachineAlreadyRegistered)
+            } else {
+                <Machines<T>>::insert(account, true);
+                Ok(())
+            }
         }
     }
 

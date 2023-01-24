@@ -1,18 +1,13 @@
 //! All pallet relevant structs are defined here
-// use codec::{Decode, Encode};
-// use scale_info::TypeInfo;
-// #[cfg(feature = "std")]
-// use serde::{Deserialize, Serialize};
-// use sp_core::RuntimeDebug;
-use frame_support::traits::{
-    Currency
-};
+use frame_support::traits::Currency;
 
 
 /// Short form type definition to simplify method definition.
-pub type Balance<T> = <<T as crate::Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
+pub type CrtBalance<T> = <<T as crate::Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
+// /// Short form type definition to simplify method definition.
+// pub type CrtPosImbalance<T> = <<T as crate::Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::PositiveImbalance;
 /// Short form type definition to simplify method definition.
-pub type PositiveImbalance<T> = <<T as crate::Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::PositiveImbalance;
+pub type CrtWeight<T> = <T as crate::Config>::WeightInfo;
 
 
 // pub struct RewardConfig<T: > {
