@@ -15,7 +15,6 @@ type Block = frame_system::mocking::MockBlock<Test>;
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 // peaq-pallet-mor
 pub type BalancesType = u128;
-pub type MachineId = [u8; 32];
 
 // Configure a mock runtime to test the pallet.
 frame_support::construct_runtime!(
@@ -27,6 +26,7 @@ frame_support::construct_runtime!(
         System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
         Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent},
         Balances: pallet_balances::{Pallet, Call, Config<T>, Storage, Event<T>},
+        PeaqDid: peaq_pallet_did::{Pallet, Call, Storage, Event<T>},
         PeaqMor: peaq_pallet_mor::{Pallet, Call, Storage, Event<T>},
     }
 );
@@ -90,11 +90,16 @@ impl pallet_balances::Config for Test {
 	type WeightInfo = ();
 }
 
+impl peaq_pallet_did::Config for Test {
+    type Event = Event;
+    type Time = pallet_timestamp::Pallet<Test>;
+    type WeightInfo = peaq_pallet_did::weights::SubstrateWeight<Test>;
+}
+
 impl peaq_pallet_mor::Config for Test {
     type Event = Event;
     type Currency = Balances;
     type PotId = PotId;
-    type MachineId = MachineId;
     type WeightInfo = peaq_pallet_mor::weights::SubstrateWeight<Test>;
 }
 
