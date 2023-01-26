@@ -30,7 +30,7 @@ pub enum MorError {
     /// to developer of the Peaq-MOR pallet.
     UnexpectedDidError,
     /// Sent when there are not enough tokens to withdrawel from the pot.
-    UnsufficientTokensInPot,
+    InsufficientTokensInPot,
 }
 
 impl From<DidError> for MorError {
