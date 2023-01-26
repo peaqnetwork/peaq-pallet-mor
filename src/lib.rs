@@ -222,8 +222,10 @@ pub mod pallet {
         RewardsMinted(T::AccountId, CrtBalance<T>),
         /// Machine owner has been rewarded by tokens from the pot.
         RewardsFromPot(T::AccountId, CrtBalance<T>),
-        /// Get balance-based informations. Temporary for development.
-        BalanceIs(CrtBalance<T>),
+        /// Temporary for development. Fetched balance of MOR pot.
+        FetchedPotBalance(CrtBalance<T>),
+        /// Temporary for development. Fetched current amount of rewarding.
+        FetchedCurrentRewarding(CrtBalance<T>),
     }
 
 
@@ -318,7 +320,7 @@ pub mod pallet {
             let pot: T::AccountId = T::PotId::get().into_account_truncating();
             let amount = T::Currency::free_balance(&pot);
             
-            Self::deposit_event(Event::<T>::BalanceIs(amount));
+            Self::deposit_event(Event::<T>::FetchedPotBalance(amount));
             Ok(())
         }
 
@@ -331,7 +333,7 @@ pub mod pallet {
 
             let amount = <PeriodReward<T>>::get();
             
-            Self::deposit_event(Event::<T>::BalanceIs(amount));
+            Self::deposit_event(Event::<T>::FetchedCurrentRewarding(amount));
             Ok(())
         }
     }
