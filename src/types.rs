@@ -1,4 +1,5 @@
 //! All pallet relevant structs are defined here
+
 use frame_support::traits::Currency;
 
 
@@ -8,6 +9,7 @@ pub type CrtBalance<T> = <<T as crate::Config>::Currency as Currency<<T as frame
 // pub type CrtPosImbalance<T> = <<T as crate::Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::PositiveImbalance;
 /// Short form type definition to simplify method definition.
 pub type CrtWeight<T> = <T as crate::Config>::WeightInfo;
+
 
 
 // pub struct RewardConfig<T: > {
