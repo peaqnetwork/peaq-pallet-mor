@@ -1,13 +1,9 @@
 //! Unit tests for this pallet, see spec definition
 
-use frame_support::{assert_ok, assert_noop};
+use frame_support::{assert_noop, assert_ok};
 use sp_core::sr25519::Public;
 // use sp_std::vec;
-use crate::{
-    mock::*,
-    Error, types::CrtBalance,
-};
-
+use crate::{mock::*, types::CrtBalance, Error};
 
 // Defined in moch.rs:
 // const O_ACCT: &'static str
@@ -16,7 +12,6 @@ use crate::{
 
 const M_ATTR: &[u8] = b"Attribute";
 const M_VAL: &[u8] = b"Value";
-
 
 fn register_machine_did(owner: Public, machine: Public) {
     // Register at least one attribute on Peaq-DID.
@@ -39,7 +34,6 @@ fn register_machine_mor(owner: Public, machine: Public) {
     ));
 }
 
-
 #[test]
 fn register_new_machine_test() {
     new_test_ext().execute_with(|| {
@@ -49,9 +43,7 @@ fn register_new_machine_test() {
         // Try to register new machine on Peaq-MOR, which is not registered in Peaq-DID.
         // Expect error DidAuthorizationFailed.
         assert_noop!(
-            PeaqMor::register_new_machine(
-                Origin::signed(owner),
-                machine),
+            PeaqMor::register_new_machine(Origin::signed(owner), machine),
             Error::<Test>::DidAuthorizationFailed
         );
 
@@ -59,7 +51,6 @@ fn register_new_machine_test() {
         register_machine_mor(owner, machine);
     });
 }
-
 
 #[test]
 fn get_online_rewards_test() {
@@ -70,21 +61,17 @@ fn get_online_rewards_test() {
         // Try to collect rewards. No machines registered.
         // Expect error AuthorizationFailed.
         assert_noop!(
-            PeaqMor::get_online_rewards(
-                Origin::signed(owner),
-                machine),
+            PeaqMor::get_online_rewards(Origin::signed(owner), machine),
             Error::<Test>::DidAuthorizationFailed
         );
-        
+
         // Register new machine only in Peaq-DID.
         register_machine_did(owner, machine);
 
         // Try to register new machine on Peaq-MOR, which is only registered in Peaq-DID.
         // Expect error MorAuthorizationFailed.
         assert_noop!(
-            PeaqMor::get_online_rewards(
-                Origin::signed(owner),
-                machine),
+            PeaqMor::get_online_rewards(Origin::signed(owner), machine),
             Error::<Test>::MachineNotRegistered
         );
 
@@ -93,13 +80,9 @@ fn get_online_rewards_test() {
 
         // Now get the online rewards.
         // Expect no error.
-        assert_ok!(PeaqMor::get_online_rewards(
-            Origin::signed(owner),
-            machine
-        ));
+        assert_ok!(PeaqMor::get_online_rewards(Origin::signed(owner), machine));
     });
 }
-
 
 #[test]
 fn pay_machine_usage_test() {

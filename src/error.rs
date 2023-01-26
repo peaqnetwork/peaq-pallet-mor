@@ -5,10 +5,8 @@ use peaq_pallet_did::did::DidError;
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
 
-
 /// Result definition for this pallet with unique error type to simplify coding.
 pub type MorResult<T> = core::result::Result<T, MorError>;
-
 
 /// This enum defines the all types of possible errors of this pallet. Have a
 /// look on the descriptions of each error state.
@@ -37,7 +35,7 @@ impl From<DidError> for MorError {
     fn from(err: DidError) -> Self {
         match err {
             DidError::AuthorizationFailed => MorError::DidAuthorizationFailed,
-            _ => MorError::UnexpectedDidError
+            _ => MorError::UnexpectedDidError,
         }
     }
 }

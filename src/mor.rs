@@ -5,7 +5,6 @@ use frame_support::pallet_prelude::DispatchResult;
 
 use crate::error::MorResult;
 
-
 /// The trait `MorBalance` describes relevant functionality related to tokens. If
 /// tokens will be minted or transfered from the pot is implemented here. Also a
 /// method to track the collected block-rewards is listed here.
@@ -21,7 +20,6 @@ pub trait MorBalance<AccountId, Balance> {
     /// amount, that has been collected in the last time period.
     fn log_block_rewards(amount: Balance);
 }
-
 
 /// The trait `MorMachine` encapsules adminstrative methods related to machines.
 pub trait MorMachine<AccountId, Balance> {
