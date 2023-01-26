@@ -139,10 +139,7 @@ pub mod pallet {
         types::*,
         weights::WeightInfo,
     };
-
-    // Temporary constant, which defines how much blocks are generated to define
-    // the period of time, which a machine has to be online to get rewarded
-    const N_BLOCKS: usize = 200;
+    
 
     #[pallet::pallet]
     #[pallet::generate_store(pub(super) trait Store)]
@@ -169,6 +166,7 @@ pub mod pallet {
         type WeightInfo: WeightInfo;
     }
 
+
     /// This storage is only a lookup table, to make sure, that each machine will be
     /// registered only once (prevents registering same machine on different accounts).
     /// Its purpose is not designed for interacting with machines on the network.
@@ -194,6 +192,13 @@ pub mod pallet {
     #[pallet::storage]
     #[pallet::getter(fn period_reward_of)]
     pub(super) type PeriodReward<T: Config> = StorageValue<_, CrtBalance<T>, ValueQuery>;
+
+    /// This storage hols the configuration of this pallet. About configurable
+    /// parameters have a look at the MorConfig definition/description.
+    #[pallet::storage]
+    #[pallet::getter(fn mor_config_of)]
+    pub(super) type MorConfigStorage<T: Config> = StorageValue<_, MorConfig<T>, ValueQuery>;
+
 
     /// Possible Event types of this pallet.
     #[pallet::event]
@@ -234,6 +239,35 @@ pub mod pallet {
         }
     }
 
+
+    #[pallet::genesis_config]
+	pub struct GenesisConfig<T: Config> {
+		pub mor_config: MorConfig<T>,
+		// pub block_issue_reward: BalanceOf<T>,
+		// pub hard_cap: BalanceOf<T>,
+	}
+
+	#[cfg(feature = "std")]
+	impl<T: Config> Default for GenesisConfig<T> {
+		fn default() -> Self {
+			Self {
+				mor_config: MorConfig::<T>::default(),
+				// block_issue_reward: Default::default(),
+				// hard_cap: Default::default(),
+			}
+		}
+	}
+
+    #[pallet::genesis_build]
+	impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
+		fn build(&self) {
+			MorConfigStorage::<T>::put(self.mor_config.clone());
+			// BlockIssueReward::<T>::put(self.block_issue_reward);
+			// HardCap::<T>::put(self.hard_cap);
+		}
+	}
+
+
     // Dispatchable functions allows users to interact with the pallet and invoke state changes.
     // These functions materialize as "extrinsics", which are often compared to transactions.
     // Dispatchable functions must be annotated with a weight and must return a DispatchResult.
@@ -255,7 +289,7 @@ pub mod pallet {
         }
 
         /// In this early version one can collect rewards for a machine, which has been online
-        /// on the network for a defined time period, see N_BLOCKS. This method will raise
+        /// on the network for a defined time period, see MorConfig. This method will raise
         /// errors if the authorization in Peaq-DID fails or if the machine is not registered
         /// in Peaq-MOR.
         #[pallet::weight(CrtWeight::<T>::some_extrinsic())]
@@ -335,22 +369,23 @@ pub mod pallet {
         }
 
         fn log_block_rewards(amount: CrtBalance<T>) {
+            let mor_config = <MorConfigStorage<T>>::get();
+            let n_blocks = mor_config.time_period_blocks;
             if !<RewardsRecord<T>>::exists() {
-                // Do initial setup - Genesis??
-                <RewardsRecord<T>>::set((1u8, vec![<CrtBalance<T>>::from(0u128); N_BLOCKS]));
+                <RewardsRecord<T>>::set((1u8, vec![<CrtBalance<T>>::from(0u128); n_blocks]));
             }
 
-            // RewardsRecord: (u8, [CrtBalance<T>; N_BLOCKS])
+            // RewardsRecord: (u8, Vec<CrtBalance<T>>)
             // Next array-slot to write in, Array of imbalances
             let (mut slot_cnt, mut balances) = <RewardsRecord<T>>::get();
             balances[slot_cnt as usize] = amount;
             slot_cnt += 1;
-            if slot_cnt as usize >= N_BLOCKS {
+            if slot_cnt >= n_blocks {
                 slot_cnt = 0;
             }
 
             // PeriodReward: CrtBalance<T>
-            // Sum of last N_BLOCKS block-rewards
+            // Sum of last n_blocks block-rewards
             let mut period_reward = <CrtBalance<T>>::from(0u128);
             // Workarround, skip some block rewards to gain always positive balance
             balances.iter().skip(5).for_each(|&b| period_reward += b);

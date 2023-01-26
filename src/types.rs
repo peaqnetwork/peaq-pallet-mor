@@ -20,9 +20,25 @@ pub type CrtWeight<T> = <T as crate::Config>::WeightInfo;
 #[derive(
     PartialEq, Eq, Clone, Encode, Decode, RuntimeDebug, TypeInfo //, MaxEncodedLen
 )]
-pub struct MorConfig<Balance> {
+pub struct MorConfig<T: crate::Config>
+{
     /// How much tokens a machine owner gets rewarded, when registering a new machine on the network.
-    registration_reward: Balance,
+    #[codec(compact)]
+    pub registration_reward: CrtBalance<T>,
     /// Defines how much time is one period (to be online to get rewarded).
-    time_period_blocks: u8,
+    #[codec(compact)]
+    pub time_period_blocks: u8,
+}
+
+impl<T> Default for MorConfig<T>
+where 
+    T: crate::Config,
+    CrtBalance<T>: From<u128> 
+{
+    fn default() -> Self {
+        MorConfig{
+            registration_reward: CrtBalance::<T>::from(100_000_000_000_000_000_u128),
+            time_period_blocks: 200,
+        }
+    }
 }
