@@ -130,8 +130,8 @@ pub mod pallet {
         error::{
             MorError,
             MorError::{
-                DidAuthorizationFailed, MachineAlreadyRegistered, MachineNotRegistered,
-                MorAuthorizationFailed, UnexpectedDidError, UnsufficientTokensInPot,
+                MachineAlreadyRegistered, MachineNotRegistered, DidAuthorizationFailed,
+                MorAuthorizationFailed, UnexpectedDidError, InsufficientTokensInPot
             },
             MorResult,
         },
@@ -223,7 +223,7 @@ pub mod pallet {
         DidAuthorizationFailed,
         MorAuthorizationFailed,
         UnexpectedDidError,
-        UnsufficientTokensInPot,
+        InsufficientTokensInPot
     }
 
     impl<T: Config> Error<T> {
@@ -234,7 +234,7 @@ pub mod pallet {
                 DidAuthorizationFailed => Error::<T>::DidAuthorizationFailed.into(),
                 MorAuthorizationFailed => Error::<T>::MorAuthorizationFailed.into(),
                 UnexpectedDidError => Error::<T>::UnexpectedDidError.into(),
-                UnsufficientTokensInPot => Error::<T>::UnsufficientTokensInPot.into(),
+                InsufficientTokensInPot => Error::<T>::InsufficientTokensInPot.into(),
             }
         }
     }
@@ -273,8 +273,7 @@ pub mod pallet {
     // Dispatchable functions must be annotated with a weight and must return a DispatchResult.
     #[pallet::call]
     impl<T: Config> Pallet<T>
-    where
-        CrtBalance<T>: From<u128>,
+    where CrtBalance<T>: From<u64> + From<u128>
     {
         /// Registers a new machine on the network by given account-ID and machine-ID. This
         /// method will raise errors if the machine is already registered, or if the
@@ -341,8 +340,7 @@ pub mod pallet {
 
     // See MorBalance trait definition for further details
     impl<T: Config> MorBalance<T::AccountId, CrtBalance<T>> for Pallet<T>
-    where
-        CrtBalance<T>: From<u128>,
+    where CrtBalance<T>: From<u64> + From<u128>
     {
         fn mint_to_account(account: &T::AccountId, amount: CrtBalance<T>) -> DispatchResult {
             // let mut total_imbalance = <CrtPosImbalance<T>>::zero();
@@ -364,7 +362,7 @@ pub mod pallet {
                 Self::deposit_event(Event::<T>::RewardsFromPot(account.clone(), amount));
                 Ok(())
             } else {
-                Err(Error::<T>::from_mor(UnsufficientTokensInPot))
+                Err(Error::<T>::from_mor(InsufficientTokensInPot))
             }
         }
 
@@ -397,8 +395,7 @@ pub mod pallet {
 
     // See MorMachine trait description for further details
     impl<T: Config> MorMachine<T::AccountId, CrtBalance<T>> for Pallet<T>
-    where
-        CrtBalance<T>: From<u128>,
+    where CrtBalance<T>: From<u64> + From<u128>
     {
         fn register_machine(
             owner: &T::AccountId,
@@ -414,7 +411,7 @@ pub mod pallet {
                 let owner_hash = (owner).using_encoded(blake2_256);
                 <MachineRegister<T>>::insert(machine_hash, owner_hash);
                 // 1 AGNG = 1_000_000_000_000_000_000
-                Ok(<CrtBalance<T>>::from(100_000_000_000_000_000_u128))
+                Ok(<CrtBalance<T>>::from(100_000_000_000_000_000u128))
             }
         }
 
