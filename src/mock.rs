@@ -7,7 +7,7 @@ use pallet_balances;
 use sp_core::{sr25519, Pair, H256};
 use sp_runtime::{
     testing::Header,
-    traits::{BlakeTwo256, IdentityLookup},
+    traits::{BlakeTwo256, IdentityLookup, AccountIdConversion},
 };
 
 // system
@@ -15,7 +15,6 @@ type Block = frame_system::mocking::MockBlock<Test>;
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 // peaq-pallet-mor
 pub type BalancesType = u128;
-pub type MachineId = [u8; 32];
 
 // Configure a mock runtime to test the pallet.
 frame_support::construct_runtime!(
@@ -27,6 +26,7 @@ frame_support::construct_runtime!(
         System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
         Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent},
         Balances: pallet_balances::{Pallet, Call, Config<T>, Storage, Event<T>},
+        PeaqDid: peaq_pallet_did::{Pallet, Call, Storage, Event<T>},
         PeaqMor: peaq_pallet_mor::{Pallet, Call, Storage, Event<T>},
     }
 );
@@ -90,20 +90,49 @@ impl pallet_balances::Config for Test {
 	type WeightInfo = ();
 }
 
+impl peaq_pallet_did::Config for Test {
+    type Event = Event;
+    type Time = pallet_timestamp::Pallet<Test>;
+    type WeightInfo = peaq_pallet_did::weights::SubstrateWeight<Test>;
+}
+
 impl peaq_pallet_mor::Config for Test {
     type Event = Event;
     type Currency = Balances;
     type PotId = PotId;
-    type MachineId = MachineId;
     type WeightInfo = peaq_pallet_mor::weights::SubstrateWeight<Test>;
 }
 
+
+// Some constants for the test
+pub(crate) const O_ACCT: &'static str = "Alice";
+pub(crate) const U_ACCT: &'static str = "SomeUser";
+pub(crate) const M_ACCT: &'static str = "RPi001";
+
 // Build genesis storage according to the mock runtime.
 pub fn new_test_ext() -> sp_io::TestExternalities {
-    system::GenesisConfig::default()
+    let mut test_ext = system::GenesisConfig::default()
         .build_storage::<Test>()
         .unwrap()
-        .into()
+        .into();
+        
+        //  creates a default balance for the owner account
+        let owner = account_key(O_ACCT);
+        let user = account_key(U_ACCT);
+        let machine = account_key(M_ACCT);
+        let mor_pot = PotId::get().into_account_truncating();
+
+        pallet_balances::GenesisConfig::<Test> {
+            balances: vec![
+                (owner, 10_000_000_000_000_000_000),
+                (user, 10_000_000_000_000_000_000),
+                (machine, 1_000_000_000_000_000_000),
+                (mor_pot, 10_000_000_000_000_000_000)
+            ]
+        }
+        .assimilate_storage(&mut test_ext)
+        .unwrap();
+        test_ext.into()
 }
 
 pub fn account_key(s: &str) -> sr25519::Public {

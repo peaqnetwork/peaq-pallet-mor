@@ -122,6 +122,7 @@ pub mod pallet {
             Currency, ExistenceRequirement, Get, LockableCurrency, ReservableCurrency
         },
     };
+    use sp_io::hashing::blake2_256;
     use sp_std::{vec, vec::Vec};
     use sp_runtime::traits::AccountIdConversion;
 
@@ -134,8 +135,8 @@ pub mod pallet {
         error::{
             MorError, MorResult,
             MorError::{
-                AuthorizationFailed, MachineAlreadyRegistered, NameExceedMaxChar,
-                UnexpectedDidError, UnsufficientTokensInPot
+                MachineAlreadyRegistered, MachineNotRegistered, DidAuthorizationFailed,
+                MorAuthorizationFailed, UnexpectedDidError, InsufficientTokensInPot
             },
         },
         types::*,
@@ -179,27 +180,34 @@ pub mod pallet {
     /// This storage is only a lookup table, to make sure, that each machine will be
     /// registered only once (prevents registering same machine on different accounts).
     /// Its purpose is not designed for interacting with machines on the network.
+    /// Key of the StorageMap will be the machine's account, value the owner's account.
     #[pallet::storage]
-    #[pallet::getter(fn machines_of)]
-    pub type Machines<T: Config> = StorageMap<_,
+    #[pallet::getter(fn machine_register_of)]
+    pub(super) type MachineRegister<T: Config> = StorageMap<_,
         Blake2_128Concat,
-        T::AccountId,
-        bool,
+        [u8; 32],
+        [u8; 32],
         ValueQuery
     >;
 
-    /// TODO
+    /// Storage for recording incoming block-rewards. Its purpose is to be able to
+    /// calculate the amount (sum) of all collected block-rewards within the defined
+    /// time period.
+    /// u8 stores the next Vec-index to be written over.
+    /// Vec of balances of collected block-rewards.
     #[pallet::storage]
     #[pallet::getter(fn rewards_record_of)]
-    pub type RewardsRecord<T: Config> = StorageValue<_,
+    pub(super) type RewardsRecord<T: Config> = StorageValue<_,
         (u8, Vec<CrtBalance<T>>),
         ValueQuery
     >;
 
-    // TODO 
+    /// This storage is for the sum over collected block-rewards. This amount will be
+    /// transfered to an owner's account, when he requests the online-reward for his
+    /// macine.
     #[pallet::storage]
     #[pallet::getter(fn period_reward_of)]
-    pub type PeriodReward<T: Config> = StorageValue<_,
+    pub(super) type PeriodReward<T: Config> = StorageValue<_,
         CrtBalance<T>,
         ValueQuery
     >;
@@ -210,33 +218,38 @@ pub mod pallet {
     #[pallet::event]
     #[pallet::generate_deposit(pub(super) fn deposit_event)]
     pub enum Event<T: Config> {
-        /// Machine has been rewarded
-        MintedRewards(T::AccountId, CrtBalance<T>),
-        /// Machine owner has been rewarded
-        PayedFromPot(T::AccountId, CrtBalance<T>),
-        /// Get balance-based information
-        BalanceIs(CrtBalance<T>),
+        /// Machine has been rewarded by minting tokens.
+        RewardsMinted(T::AccountId, CrtBalance<T>),
+        /// Machine owner has been rewarded by tokens from the pot.
+        RewardsFromPot(T::AccountId, CrtBalance<T>),
+        /// Temporary for development. Fetched balance of MOR pot.
+        FetchedPotBalance(CrtBalance<T>),
+        /// Temporary for development. Fetched current amount of rewarding.
+        FetchedCurrentRewarding(CrtBalance<T>),
     }
 
 
-    /// For description of error types, please have a look into module error.
+    /// For description of error types, please have a look into module error for
+    /// further informations about error types.
     #[pallet::error]
     pub enum Error<T> {
-        AuthorizationFailed,
         MachineAlreadyRegistered,
-        NameExceedMaxChar,
+        MachineNotRegistered,
+        DidAuthorizationFailed,
+        MorAuthorizationFailed,
         UnexpectedDidError,
-        UnsufficientTokensInPot,
+        InsufficientTokensInPot
     }
     
     impl<T: Config> Error<T> {
-        fn dispatch_error(err: MorError) -> DispatchError {
+        fn from_mor(err: MorError) -> DispatchError {
             match err {
-                AuthorizationFailed => Error::<T>::AuthorizationFailed.into(),
                 MachineAlreadyRegistered => Error::<T>::MachineAlreadyRegistered.into(),
-                NameExceedMaxChar => Error::<T>::NameExceedMaxChar.into(),
+                MachineNotRegistered => Error::<T>::MachineNotRegistered.into(),
+                DidAuthorizationFailed => Error::<T>::DidAuthorizationFailed.into(),
+                MorAuthorizationFailed => Error::<T>::MorAuthorizationFailed.into(),
                 UnexpectedDidError => Error::<T>::UnexpectedDidError.into(),
-                UnsufficientTokensInPot => Error::<T>::UnsufficientTokensInPot.into(),
+                InsufficientTokensInPot => Error::<T>::InsufficientTokensInPot.into(),
             }
         }
     }
@@ -246,49 +259,45 @@ pub mod pallet {
     // These functions materialize as "extrinsics", which are often compared to transactions.
     // Dispatchable functions must be annotated with a weight and must return a DispatchResult.
     #[pallet::call]
-    impl<T: Config> Pallet<T> 
-    where
-        CrtBalance<T>: From<u128>
+    impl<T: Config> Pallet<T>
+    where CrtBalance<T>: From<u64> + From<u128>
     {
-        /// Registers a new machine on the network by given account-ID and machine-ID.
+        /// Registers a new machine on the network by given account-ID and machine-ID. This
+        /// method will raise errors if the machine is already registered, or if the
+        /// authorization in Peaq-DID fails.
         #[pallet::weight(CrtWeight::<T>::some_extrinsic())]
         pub fn register_new_machine(
             origin: OriginFor<T>,
             machine: T::AccountId
         ) -> DispatchResult {
             let sender = ensure_signed(origin)?;
-            DidPallet::<T>::is_owner(&sender, &machine).
-                map_err(|e| Error::<T>::dispatch_error(MorError::from(e))
-            )?;
 
-            Self::register_machine(&machine).map_err(
-                Error::<T>::dispatch_error
-            )?;
+            let reward = Self::register_machine(&sender, &machine)
+                .map_err(Error::<T>::from_mor)?;
 
-            // 1 AGNG = 1_000_000_000_000_000_000
-            let amount = <CrtBalance<T>>::from(100_000_000_000_000_000_u128);
-            Self::mint_to_account(sender, amount)
+            Self::mint_to_account(&sender, reward)
         }
 
         /// In this early version one can collect rewards for a machine, which has been online
-        /// on the network for a certain period of time.
+        /// on the network for a defined time period, see N_BLOCKS. This method will raise 
+        /// errors if the authorization in Peaq-DID fails or if the machine is not registered
+        /// in Peaq-MOR.
         #[pallet::weight(CrtWeight::<T>::some_extrinsic())]
         pub fn get_online_rewards(
             origin: OriginFor<T>,
             machine: T::AccountId
         ) -> DispatchResult {
             let sender = ensure_signed(origin)?;
-            DidPallet::<T>::is_owner(&sender, &machine).
-                map_err(|e| Error::<T>::dispatch_error(MorError::from(e))
-            )?;
+            
+            let reward = Self::reward_machine(&sender, &machine)
+                .map_err(Error::<T>::from_mor)?;
 
-            let reward = <PeriodReward<T>>::get();
-
-            Self::transfer_from_pot(sender, reward)
+            Self::transfer_from_pot(&sender, reward)
         }
 
-        /// In this early version one can collect rewards for a machine, which has been online
-        /// on the network for a certain period of time.
+        /// When using a machine, this extrinsic is about to pay the fee for the machine usage.
+        /// Assumption is, that the origin is the user, which used the machine and he will pay
+        /// the fee for machine usage.
         #[pallet::weight(CrtWeight::<T>::some_extrinsic())]
         pub fn pay_machine_usage(
             origin: OriginFor<T>,
@@ -297,11 +306,11 @@ pub mod pallet {
         ) -> DispatchResult {
             let sender = ensure_signed(origin)?;
 
-            // Self::mint_to_account(machine, amount)
             T::Currency::transfer(&sender, &machine, amount, ExistenceRequirement::KeepAlive)
         }
 
 
+        /// This is temporary for debug and development
         #[pallet::weight(CrtWeight::<T>::some_extrinsic())]
         pub fn fetch_pot_balance(
             origin: OriginFor<T>
@@ -311,11 +320,11 @@ pub mod pallet {
             let pot: T::AccountId = T::PotId::get().into_account_truncating();
             let amount = T::Currency::free_balance(&pot);
             
-            Self::deposit_event(Event::<T>::BalanceIs(amount));
+            Self::deposit_event(Event::<T>::FetchedPotBalance(amount));
             Ok(())
         }
 
-
+        /// This is temporary for debug and development
         #[pallet::weight(CrtWeight::<T>::some_extrinsic())]
         pub fn fetch_period_rewarding(
             origin: OriginFor<T>
@@ -324,22 +333,24 @@ pub mod pallet {
 
             let amount = <PeriodReward<T>>::get();
             
-            Self::deposit_event(Event::<T>::BalanceIs(amount));
+            Self::deposit_event(Event::<T>::FetchedCurrentRewarding(amount));
             Ok(())
         }
     }
 
-    // See trait definition for further details
-    impl<T: Config> MorBalance<T::AccountId, CrtBalance<T>> for Pallet<T> {
+    // See MorBalance trait definition for further details
+    impl<T: Config> MorBalance<T::AccountId, CrtBalance<T>> for Pallet<T>
+    where CrtBalance<T>: From<u64> + From<u128>
+    {
         fn mint_to_account(
-            account: T::AccountId,
+            account: &T::AccountId,
             amount: CrtBalance<T>
         ) -> DispatchResult {
             // let mut total_imbalance = <CrtPosImbalance<T>>::zero();
 
             // See https://substrate.recipes/currency-imbalances.html
-            T::Currency::deposit_into_existing(&account, amount)?;
-            Self::deposit_event(Event::<T>::MintedRewards(account, amount));
+            T::Currency::deposit_into_existing(account, amount)?;
+            Self::deposit_event(Event::<T>::RewardsMinted(account.clone(), amount));
             // total_imbalance.maybe_subsume(r);
             // T::Reward::on_unbalanced(total_imbalance);
             
@@ -347,17 +358,17 @@ pub mod pallet {
         }
 
         fn transfer_from_pot(
-            account: T::AccountId,
+            account: &T::AccountId,
             amount: CrtBalance<T>
         ) -> DispatchResult {
             let pot: T::AccountId = T::PotId::get().into_account_truncating();
 
             if T::Currency::free_balance(&pot) >= amount {
-                T::Currency::transfer(&pot, &account, amount, ExistenceRequirement::KeepAlive)?;
-                Self::deposit_event(Event::<T>::PayedFromPot(account, amount));
+                T::Currency::transfer(&pot, account, amount, ExistenceRequirement::KeepAlive)?;
+                Self::deposit_event(Event::<T>::RewardsFromPot(account.clone(), amount));
                 Ok(())
             } else {
-                Err(Error::<T>::dispatch_error(UnsufficientTokensInPot))
+                Err(Error::<T>::from_mor(InsufficientTokensInPot))
             }
         }
 
@@ -366,7 +377,7 @@ pub mod pallet {
         ) {
             if !<RewardsRecord<T>>::exists() {
                 // Do initial setup - Genesis??
-                <RewardsRecord<T>>::set((1u8, vec![<CrtBalance<T>>::from(0u32); N_BLOCKS]));
+                <RewardsRecord<T>>::set((1u8, vec![<CrtBalance<T>>::from(0u128); N_BLOCKS]));
             }
 
             // RewardsRecord: (u8, [CrtBalance<T>; N_BLOCKS])
@@ -380,7 +391,7 @@ pub mod pallet {
 
             // PeriodReward: CrtBalance<T>
             // Sum of last N_BLOCKS block-rewards
-            let mut period_reward = <CrtBalance<T>>::from(0u32);
+            let mut period_reward = <CrtBalance<T>>::from(0u128);
             // Workarround, skip some block rewards to gain always positive balance
             balances.iter().skip(5).for_each(|&b| period_reward += b);
 
@@ -389,17 +400,45 @@ pub mod pallet {
         }
     }
 
-    // See trait definition for further details
-    impl<T: Config> MorMachine<T::AccountId> for Pallet<T> {
+    // See MorMachine trait description for further details
+    impl<T: Config> MorMachine<T::AccountId, CrtBalance<T>> for Pallet<T>
+    where CrtBalance<T>: From<u64> + From<u128>
+    {
         fn register_machine(
-            account: &T::AccountId
-        ) -> MorResult<()> {
-            if <Machines<T>>::contains_key(account) {
+            owner: &T::AccountId,
+            machine: &T::AccountId
+        ) -> MorResult<CrtBalance<T>> {
+            // Registered in Peaq-DID and is this the owner?
+            DidPallet::<T>::is_owner(&owner, &machine).map_err(MorError::from)?;
+
+            let machine_hash = (machine).using_encoded(blake2_256);
+            if <MachineRegister<T>>::contains_key(machine_hash) {
                 Err(MorError::MachineAlreadyRegistered)
             } else {
-                <Machines<T>>::insert(account, true);
-                Ok(())
+                let owner_hash = (owner).using_encoded(blake2_256);
+                <MachineRegister<T>>::insert(machine_hash, owner_hash);
+                // 1 AGNG = 1_000_000_000_000_000_000
+                Ok(<CrtBalance<T>>::from(100_000_000_000_000_000u128))
             }
+        }
+
+        fn reward_machine(
+            owner: &T::AccountId,
+            machine: &T::AccountId
+        ) -> MorResult<CrtBalance<T>> {
+            // Is still registered in Peaq-DID and is this the owner?
+            DidPallet::<T>::is_owner(owner, machine).map_err(MorError::from)?;
+            // Is machine registered in Peaq-MOR?
+            let machine_hash = (machine).using_encoded(blake2_256);
+            if !<MachineRegister<T>>::contains_key(machine_hash) {
+                return Err(MorError::MachineNotRegistered)
+            }
+            let owner_hash = <MachineRegister<T>>::get(machine_hash);
+            if owner_hash != (owner).using_encoded(blake2_256) {
+                return Err(MorError::MorAuthorizationFailed)
+            }
+            
+            Ok(<PeriodReward<T>>::get())
         }
     }
 
