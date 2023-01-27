@@ -260,6 +260,7 @@ pub mod pallet {
     // Dispatchable functions must be annotated with a weight and must return a DispatchResult.
     #[pallet::call]
     impl<T: Config> Pallet<T>
+    where CrtBalance<T>: From<u64> + From<u128>
     {
         /// Registers a new machine on the network by given account-ID and machine-ID. This
         /// method will raise errors if the machine is already registered, or if the
@@ -339,6 +340,7 @@ pub mod pallet {
 
     // See MorBalance trait definition for further details
     impl<T: Config> MorBalance<T::AccountId, CrtBalance<T>> for Pallet<T>
+    where CrtBalance<T>: From<u64> + From<u128>
     {
         fn mint_to_account(
             account: &T::AccountId,
@@ -375,7 +377,7 @@ pub mod pallet {
         ) {
             if !<RewardsRecord<T>>::exists() {
                 // Do initial setup - Genesis??
-                <RewardsRecord<T>>::set((1u8, vec![<CrtBalance<T>>::from(0); N_BLOCKS]));
+                <RewardsRecord<T>>::set((1u8, vec![<CrtBalance<T>>::from(0u128); N_BLOCKS]));
             }
 
             // RewardsRecord: (u8, [CrtBalance<T>; N_BLOCKS])
@@ -389,7 +391,7 @@ pub mod pallet {
 
             // PeriodReward: CrtBalance<T>
             // Sum of last N_BLOCKS block-rewards
-            let mut period_reward = <CrtBalance<T>>::from(0);
+            let mut period_reward = <CrtBalance<T>>::from(0u128);
             // Workarround, skip some block rewards to gain always positive balance
             balances.iter().skip(5).for_each(|&b| period_reward += b);
 
@@ -399,7 +401,8 @@ pub mod pallet {
     }
 
     // See MorMachine trait description for further details
-    impl<T: Config> MorMachine<T::AccountId, CrtBalance<T>> for Pallet<T> 
+    impl<T: Config> MorMachine<T::AccountId, CrtBalance<T>> for Pallet<T>
+    where CrtBalance<T>: From<u64> + From<u128>
     {
         fn register_machine(
             owner: &T::AccountId,
@@ -415,7 +418,7 @@ pub mod pallet {
                 let owner_hash = (owner).using_encoded(blake2_256);
                 <MachineRegister<T>>::insert(machine_hash, owner_hash);
                 // 1 AGNG = 1_000_000_000_000_000_000
-                Ok(<CrtBalance<T>>::from(100_000_000_000_000_000))
+                Ok(<CrtBalance<T>>::from(100_000_000_000_000_000u128))
             }
         }
 
