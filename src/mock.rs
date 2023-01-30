@@ -2,12 +2,12 @@
 use crate as peaq_pallet_mor;
 use frame_support::{parameter_types, PalletId};
 use frame_system as system;
-use pallet_timestamp;
 use pallet_balances;
+use pallet_timestamp;
 use sp_core::{sr25519, Pair, H256};
 use sp_runtime::{
     testing::Header,
-    traits::{BlakeTwo256, IdentityLookup, AccountIdConversion},
+    traits::{AccountIdConversion, BlakeTwo256, IdentityLookup},
 };
 
 // system
@@ -41,7 +41,7 @@ parameter_types! {
     pub const PotId: PalletId = PalletId(*b"PotMchOw");
     // pallet_balances
     pub const ExistentialDeposit: u128 = 500;
-	pub const MaxLocks: u32 = 50;
+    pub const MaxLocks: u32 = 50;
 }
 
 impl system::Config for Test {
@@ -80,14 +80,14 @@ impl pallet_timestamp::Config for Test {
 
 impl pallet_balances::Config for Test {
     type MaxLocks = MaxLocks;
-	type MaxReserves = ();
-	type ReserveIdentifier = [u8; 8];
-	type Balance = BalancesType;
-	type Event = Event;
-	type DustRemoval = ();
-	type ExistentialDeposit = ExistentialDeposit;
-	type AccountStore = System;
-	type WeightInfo = ();
+    type MaxReserves = ();
+    type ReserveIdentifier = [u8; 8];
+    type Balance = BalancesType;
+    type Event = Event;
+    type DustRemoval = ();
+    type ExistentialDeposit = ExistentialDeposit;
+    type AccountStore = System;
+    type WeightInfo = ();
 }
 
 impl peaq_pallet_did::Config for Test {
@@ -103,7 +103,6 @@ impl peaq_pallet_mor::Config for Test {
     type WeightInfo = peaq_pallet_mor::weights::SubstrateWeight<Test>;
 }
 
-
 // Some constants for the test
 pub(crate) const O_ACCT: &'static str = "Alice";
 pub(crate) const U_ACCT: &'static str = "SomeUser";
@@ -115,24 +114,24 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
         .build_storage::<Test>()
         .unwrap()
         .into();
-        
-        //  creates a default balance for the owner account
-        let owner = account_key(O_ACCT);
-        let user = account_key(U_ACCT);
-        let machine = account_key(M_ACCT);
-        let mor_pot = PotId::get().into_account_truncating();
 
-        pallet_balances::GenesisConfig::<Test> {
-            balances: vec![
-                (owner, 10_000_000_000_000_000_000),
-                (user, 10_000_000_000_000_000_000),
-                (machine, 1_000_000_000_000_000_000),
-                (mor_pot, 10_000_000_000_000_000_000)
-            ]
-        }
-        .assimilate_storage(&mut test_ext)
-        .unwrap();
-        test_ext.into()
+    //  creates a default balance for the owner account
+    let owner = account_key(O_ACCT);
+    let user = account_key(U_ACCT);
+    let machine = account_key(M_ACCT);
+    let mor_pot = PotId::get().into_account_truncating();
+
+    pallet_balances::GenesisConfig::<Test> {
+        balances: vec![
+            (owner, 10_000_000_000_000_000_000),
+            (user, 10_000_000_000_000_000_000),
+            (machine, 1_000_000_000_000_000_000),
+            (mor_pot, 10_000_000_000_000_000_000),
+        ],
+    }
+    .assimilate_storage(&mut test_ext)
+    .unwrap();
+    test_ext.into()
 }
 
 pub fn account_key(s: &str) -> sr25519::Public {
