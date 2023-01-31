@@ -1,13 +1,13 @@
 //! Unit tests for this pallet, see spec definition
 
-use frame_support::{assert_noop, assert_ok};
-use sp_core::sr25519::Public;
-use sp_runtime::traits::BadOrigin;
 use crate::{
     mock::*,
     types::{BalanceOf, MorConfig},
-    Error
+    Error,
 };
+use frame_support::{assert_noop, assert_ok};
+use sp_core::sr25519::Public;
+use sp_runtime::traits::BadOrigin;
 
 // Defined in moch.rs:
 // const O_ACCT: &'static str
@@ -37,7 +37,6 @@ fn register_machine_mor(owner: Public, machine: Public) {
         machine
     ));
 }
-
 
 #[test]
 fn register_new_machine_test() {
@@ -109,18 +108,15 @@ fn pay_machine_usage_test() {
 #[test]
 fn set_configuration_test() {
     new_test_ext().execute_with(|| {
-        let config = MorConfig{
+        let config = MorConfig {
             registration_reward: BalanceOf::<Test>::from(500_000_000_000_000_000u128),
             time_period_blocks: 100,
         };
 
         // Try to set new configuration for the pallet.
         // Expect no error.
-        assert_ok!(PeaqMor::set_configuration(
-            Origin::root(),
-            config
-        ));
-    });   
+        assert_ok!(PeaqMor::set_configuration(Origin::root(), config));
+    });
 }
 
 #[test]
@@ -131,18 +127,14 @@ fn fetch_configuration_test() {
         // Try to fetch configuration details as regular user.
         // Expect error BadOrigin.
         assert_noop!(
-            PeaqMor::fetch_configuration(
-                Origin::signed(muser)
-            ),
+            PeaqMor::fetch_configuration(Origin::signed(muser)),
             BadOrigin
         );
 
         // Try to fetch current configuration of the pallet.
         // Expect no error.
-        assert_ok!(PeaqMor::fetch_configuration(
-            Origin::root()
-        ));
-    });   
+        assert_ok!(PeaqMor::fetch_configuration(Origin::root()));
+    });
 }
 
 #[test]
@@ -153,18 +145,14 @@ fn fetch_pot_balance_test() {
         // Try to fetch configuration details as regular user.
         // Expect error BadOrigin.
         assert_noop!(
-            PeaqMor::fetch_configuration(
-                Origin::signed(muser)
-            ),
+            PeaqMor::fetch_configuration(Origin::signed(muser)),
             BadOrigin
         );
 
         // Try to fetch current pot-balance of the pallet.
         // Expect no error.
-        assert_ok!(PeaqMor::fetch_pot_balance(
-            Origin::root()
-        ));
-    });   
+        assert_ok!(PeaqMor::fetch_pot_balance(Origin::root()));
+    });
 }
 
 #[test]
@@ -175,16 +163,12 @@ fn fetch_period_rewarding_test() {
         // Try to fetch configuration details as regular user.
         // Expect error BadOrigin.
         assert_noop!(
-            PeaqMor::fetch_configuration(
-                Origin::signed(muser)
-            ),
+            PeaqMor::fetch_configuration(Origin::signed(muser)),
             BadOrigin
         );
 
         // Try to fetch current pot-balance of the pallet.
         // Expect no error.
-        assert_ok!(PeaqMor::fetch_period_rewarding(
-            Origin::root()
-        ));
-    });   
+        assert_ok!(PeaqMor::fetch_period_rewarding(Origin::root()));
+    });
 }

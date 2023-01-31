@@ -74,8 +74,8 @@ impl frame_system::Config for Test {
 }
 
 impl pallet_sudo::Config for Test {
-	type Event = Event;
-	type Call = Call;
+    type Event = Event;
+    type Call = Call;
 }
 
 impl pallet_timestamp::Config for Test {
@@ -141,7 +141,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
     .unwrap();
 
     peaq_pallet_mor::GenesisConfig::<Test> {
-        mor_config: MorConfig{
+        mor_config: MorConfig {
             registration_reward: BalanceOf::<Test>::from(100_000_000_000_000_000u128),
             time_period_blocks: 200u8,
         },

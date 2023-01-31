@@ -130,15 +130,14 @@ pub mod pallet {
         error::{
             MorError,
             MorError::{
-                MachineAlreadyRegistered, MachineNotRegistered, DidAuthorizationFailed,
-                MorAuthorizationFailed, UnexpectedDidError, InsufficientTokensInPot
+                DidAuthorizationFailed, InsufficientTokensInPot, MachineAlreadyRegistered,
+                MachineNotRegistered, MorAuthorizationFailed, UnexpectedDidError,
             },
             MorResult,
         },
         mor::*,
         types::*,
     };
-    
 
     #[pallet::pallet]
     #[pallet::generate_store(pub(super) trait Store)]
@@ -149,7 +148,7 @@ pub mod pallet {
     #[pallet::config]
     pub trait Config: frame_system::Config + peaq_pallet_did::Config
     where
-        BalanceOf<Self>: Zero
+        BalanceOf<Self>: Zero,
     {
         /// Because this pallet emits events, it depends on the runtime's definition of an event.
         type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
@@ -168,7 +167,6 @@ pub mod pallet {
         type WeightInfo: WeightInfo;
     }
 
-
     /// This storage is only a lookup table, to make sure, that each machine will be
     /// registered only once (prevents registering same machine on different accounts).
     /// Its purpose is not designed for interacting with machines on the network.
@@ -185,8 +183,7 @@ pub mod pallet {
     /// Vec of balances of collected block-rewards.
     #[pallet::storage]
     #[pallet::getter(fn rewards_record_of)]
-    pub(super) type RewardsRecord<T: Config> =
-        StorageValue<_, (u8, Vec<BalanceOf<T>>), ValueQuery>;
+    pub(super) type RewardsRecord<T: Config> = StorageValue<_, (u8, Vec<BalanceOf<T>>), ValueQuery>;
 
     /// This storage is for the sum over collected block-rewards. This amount will be
     /// transfered to an owner's account, when he requests the online-reward for his
@@ -199,8 +196,8 @@ pub mod pallet {
     /// parameters have a look at the MorConfig definition/description.
     #[pallet::storage]
     #[pallet::getter(fn mor_config_of)]
-    pub(super) type MorConfigStorage<T: Config> = StorageValue<_, MorConfig<BalanceOf<T>>, ValueQuery>;
-
+    pub(super) type MorConfigStorage<T: Config> =
+        StorageValue<_, MorConfig<BalanceOf<T>>, ValueQuery>;
 
     /// Possible Event types of this pallet.
     #[pallet::event]
@@ -229,7 +226,7 @@ pub mod pallet {
         DidAuthorizationFailed,
         MorAuthorizationFailed,
         UnexpectedDidError,
-        InsufficientTokensInPot
+        InsufficientTokensInPot,
     }
 
     impl<T: Config> Error<T> {
@@ -245,27 +242,26 @@ pub mod pallet {
         }
     }
 
-
     #[pallet::genesis_config]
-	pub struct GenesisConfig<T: Config> {
-		pub mor_config: MorConfig<BalanceOf<T>>,
-	}
+    pub struct GenesisConfig<T: Config> {
+        pub mor_config: MorConfig<BalanceOf<T>>,
+    }
 
-	#[cfg(feature = "std")]
-	impl<T: Config> Default for GenesisConfig<T> {
-		fn default() -> Self {
-			Self {
-				mor_config: MorConfig::<BalanceOf<T>>::default(),
-			}
-		}
-	}
+    #[cfg(feature = "std")]
+    impl<T: Config> Default for GenesisConfig<T> {
+        fn default() -> Self {
+            Self {
+                mor_config: MorConfig::<BalanceOf<T>>::default(),
+            }
+        }
+    }
 
     #[pallet::genesis_build]
-	impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
-		fn build(&self) {
-			MorConfigStorage::<T>::put(self.mor_config.clone());
-		}
-	}
+    impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
+        fn build(&self) {
+            MorConfigStorage::<T>::put(self.mor_config.clone());
+        }
+    }
 
     #[cfg(feature = "std")]
     impl<T: Config> GenesisConfig<T> {
@@ -280,13 +276,11 @@ pub mod pallet {
         }
     }
 
-
     // Dispatchable functions allows users to interact with the pallet and invoke state changes.
     // These functions materialize as "extrinsics", which are often compared to transactions.
     // Dispatchable functions must be annotated with a weight and must return a DispatchResult.
     #[pallet::call]
-    impl<T: Config> Pallet<T>
-    {
+    impl<T: Config> Pallet<T> {
         /// Registers a new machine on the network by given account-ID and machine-ID. This
         /// method will raise errors if the machine is already registered, or if the
         /// authorization in Peaq-DID fails.
@@ -342,9 +336,7 @@ pub mod pallet {
 
         /// Updates the pallet's configuration parameters by passing a MorConfig-struct.
         #[pallet::weight(<WeightOf<T>>::some_extrinsic())]
-        pub fn fetch_configuration(
-            origin: OriginFor<T>,
-        ) -> DispatchResult {
+        pub fn fetch_configuration(origin: OriginFor<T>) -> DispatchResult {
             ensure_root(origin)?;
 
             let config = <MorConfigStorage<T>>::get();
@@ -378,8 +370,7 @@ pub mod pallet {
     }
 
     // See MorBalance trait definition for further details
-    impl<T: Config> MorBalance<T::AccountId, BalanceOf<T>> for Pallet<T>
-    {
+    impl<T: Config> MorBalance<T::AccountId, BalanceOf<T>> for Pallet<T> {
         fn mint_to_account(account: &T::AccountId, amount: BalanceOf<T>) -> DispatchResult {
             // let mut total_imbalance = <CrtPosImbalance<T>>::zero();
 
@@ -432,8 +423,7 @@ pub mod pallet {
     }
 
     // See MorMachine trait description for further details
-    impl<T: Config> MorMachine<T::AccountId, BalanceOf<T>> for Pallet<T>
-    {
+    impl<T: Config> MorMachine<T::AccountId, BalanceOf<T>> for Pallet<T> {
         fn register_machine(
             owner: &T::AccountId,
             machine: &T::AccountId,
@@ -453,10 +443,7 @@ pub mod pallet {
             }
         }
 
-        fn reward_machine(
-            owner: &T::AccountId,
-            machine: &T::AccountId,
-        ) -> MorResult<BalanceOf<T>> {
+        fn reward_machine(owner: &T::AccountId, machine: &T::AccountId) -> MorResult<BalanceOf<T>> {
             // Is still registered in Peaq-DID and is this the owner?
             DidPallet::<T>::is_owner(owner, machine).map_err(MorError::from)?;
             // Is machine registered in Peaq-MOR?
