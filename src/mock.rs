@@ -112,7 +112,6 @@ impl peaq_pallet_mor::Config for Test {
 
 // Some constants for the test
 pub(crate) const O_ACCT: &'static str = "Alice"; // Owner
-pub(crate) const S_ACCT: &'static str = "Alice"; // Sudo
 pub(crate) const U_ACCT: &'static str = "SomeUser"; // User
 pub(crate) const M_ACCT: &'static str = "RPi001"; // Machine
 
@@ -125,14 +124,11 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 
     //  creates a default balance for the owner account
     let owner = account_key(O_ACCT);
-    // let sudo = account_key(S_ACCT);
     let user = account_key(U_ACCT);
     let machine = account_key(M_ACCT);
     let mor_pot = PotId::get().into_account_truncating();
 
     // setup genesis configuration details
-    // TODO: set a sudo to make set_configuration_test() working
-
     pallet_balances::GenesisConfig::<Test> {
         balances: vec![
             (owner, 10_000_000_000_000_000_000),

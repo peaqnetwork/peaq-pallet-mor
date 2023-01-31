@@ -91,7 +91,6 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 // Fix benchmarking failure
 #![recursion_limit = "256"]
-#![feature(associated_type_bounds)]
 
 pub use pallet::*;
 
@@ -151,15 +150,14 @@ pub mod pallet {
     pub trait Config: frame_system::Config + peaq_pallet_did::Config
     where
         BalanceOf<Self>: Zero
-        // <Self::Currency as Currency<<Self as frame_system::Config>::AccountId>>::Balance: Zero
     {
         /// Because this pallet emits events, it depends on the runtime's definition of an event.
         type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 
         /// The currency type.
-        type Currency: Currency<Self::AccountId> // , Balance = Self::Balance
-            + ReservableCurrency<Self::AccountId> // , Balance = Self::Balance
-            + LockableCurrency<Self::AccountId> // , Balance = Self::Balance
+        type Currency: Currency<Self::AccountId>
+            + ReservableCurrency<Self::AccountId>
+            + LockableCurrency<Self::AccountId>
             + Eq;
 
         /// Account Identifier from which the internal Pot is generated.

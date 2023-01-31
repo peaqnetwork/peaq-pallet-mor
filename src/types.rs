@@ -36,7 +36,9 @@ impl<Balance: Zero> Default for MorConfig<Balance>
 {
     fn default() -> Self {
         MorConfig{
+            // This should be 100_000_000_000_000_000, but requires to many trait bounds
             registration_reward: Balance::zero(),
+            // Equals 20 minutes
             time_period_blocks: 200,
         }
     }

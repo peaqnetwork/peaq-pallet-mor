@@ -2,6 +2,7 @@
 
 use frame_support::{assert_noop, assert_ok};
 use sp_core::sr25519::Public;
+use sp_runtime::traits::BadOrigin;
 use crate::{
     mock::*,
     types::{BalanceOf, MorConfig},
@@ -108,7 +109,6 @@ fn pay_machine_usage_test() {
 #[test]
 fn set_configuration_test() {
     new_test_ext().execute_with(|| {
-        let sudo = account_key(S_ACCT);
         let config = MorConfig{
             registration_reward: BalanceOf::<Test>::from(500_000_000_000_000_000u128),
             time_period_blocks: 100,
@@ -117,8 +117,74 @@ fn set_configuration_test() {
         // Try to set new configuration for the pallet.
         // Expect no error.
         assert_ok!(PeaqMor::set_configuration(
-            Origin::signed(sudo),
+            Origin::root(),
             config
+        ));
+    });   
+}
+
+#[test]
+fn fetch_configuration_test() {
+    new_test_ext().execute_with(|| {
+        let muser = account_key(U_ACCT);
+
+        // Try to fetch configuration details as regular user.
+        // Expect error BadOrigin.
+        assert_noop!(
+            PeaqMor::fetch_configuration(
+                Origin::signed(muser)
+            ),
+            BadOrigin
+        );
+
+        // Try to fetch current configuration of the pallet.
+        // Expect no error.
+        assert_ok!(PeaqMor::fetch_configuration(
+            Origin::root()
+        ));
+    });   
+}
+
+#[test]
+fn fetch_pot_balance_test() {
+    new_test_ext().execute_with(|| {
+        let muser = account_key(U_ACCT);
+
+        // Try to fetch configuration details as regular user.
+        // Expect error BadOrigin.
+        assert_noop!(
+            PeaqMor::fetch_configuration(
+                Origin::signed(muser)
+            ),
+            BadOrigin
+        );
+
+        // Try to fetch current pot-balance of the pallet.
+        // Expect no error.
+        assert_ok!(PeaqMor::fetch_pot_balance(
+            Origin::root()
+        ));
+    });   
+}
+
+#[test]
+fn fetch_period_rewarding_test() {
+    new_test_ext().execute_with(|| {
+        let muser = account_key(U_ACCT);
+
+        // Try to fetch configuration details as regular user.
+        // Expect error BadOrigin.
+        assert_noop!(
+            PeaqMor::fetch_configuration(
+                Origin::signed(muser)
+            ),
+            BadOrigin
+        );
+
+        // Try to fetch current pot-balance of the pallet.
+        // Expect no error.
+        assert_ok!(PeaqMor::fetch_period_rewarding(
+            Origin::root()
         ));
     });   
 }
