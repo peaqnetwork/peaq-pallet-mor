@@ -18,7 +18,7 @@ The Peaq-MOR pallet supports the distribution of rewards to machine owners. Bloc
 
 ### Current Use Cases
 
-- `register_new_machine` - The owner of a machine can, after adding at least one attribute of the machine to the Peaq-DID pallet, register his machine here too and will get rewarded. The rewards will be paid on his account. This reward will be minted by the blockchain.
+- `get_registration_reward` - The owner of a machine can, after adding at least one attribute of the machine to the Peaq-DID pallet, request rewards for registering his machine and will get rewarded. The rewards will be paid on his account. This reward will be minted by the blockchain.
 
 - `get_online_rewards` - An owner of a machine can request rewards for having its machine online for a defined time period. These rewards can be requested for each machine beeing continiously online on the network. This reward will be taken out of the pallet's pot. The amount will have the same scalar of the amount of tokens, the Peaq-MOR pallet has collected within that defined time period.
 
