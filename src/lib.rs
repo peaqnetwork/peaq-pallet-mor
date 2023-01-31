@@ -56,7 +56,6 @@
 //!         type Event = Event;
 //!         type Currency = Balances;
 //!         type PotId = PotMorId;
-//!         type MachineId = MachineId;
 //!         type WeightInfo = peaq_pallet_mor::weights::SubstrateWeight<Runtime>;
 //!     }
 //!     ```
@@ -70,7 +69,7 @@
 //!         {
 //!             System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
 //!             // ...
-//!             PeaqMor: peaq_pallet_mor::{Pallet, Call, Storage, Event<T>}
+//!             PeaqMor: peaq_pallet_mor::{Pallet, Call, Config, Storage, Event<T>}
 //!         }
 //!     }
 //!     ```
@@ -92,6 +91,7 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 // Fix benchmarking failure
 #![recursion_limit = "256"]
+#![feature(associated_type_bounds)]
 
 pub use pallet::*;
 
@@ -121,11 +121,12 @@ pub mod pallet {
     };
     use frame_system::pallet_prelude::*;
     use sp_io::hashing::blake2_256;
-    use sp_runtime::traits::AccountIdConversion;
+    use sp_runtime::traits::{AccountIdConversion, Zero};
     use sp_std::{vec, vec::Vec};
 
     use peaq_pallet_did::{did::Did, Pallet as DidPallet};
 
+    use super::WeightInfo;
     use crate::{
         error::{
             MorError,
@@ -137,7 +138,6 @@ pub mod pallet {
         },
         mor::*,
         types::*,
-        weights::WeightInfo,
     };
     
 
@@ -148,14 +148,18 @@ pub mod pallet {
 
     /// Configuration trait of this pallet.
     #[pallet::config]
-    pub trait Config: frame_system::Config + peaq_pallet_did::Config {
+    pub trait Config: frame_system::Config + peaq_pallet_did::Config
+    where
+        BalanceOf<Self>: Zero
+        // <Self::Currency as Currency<<Self as frame_system::Config>::AccountId>>::Balance: Zero
+    {
         /// Because this pallet emits events, it depends on the runtime's definition of an event.
         type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 
-        /// Currency description TODO
-        type Currency: Currency<Self::AccountId>
-            + ReservableCurrency<Self::AccountId>
-            + LockableCurrency<Self::AccountId>
+        /// The currency type.
+        type Currency: Currency<Self::AccountId> // , Balance = Self::Balance
+            + ReservableCurrency<Self::AccountId> // , Balance = Self::Balance
+            + LockableCurrency<Self::AccountId> // , Balance = Self::Balance
             + Eq;
 
         /// Account Identifier from which the internal Pot is generated.
@@ -184,20 +188,20 @@ pub mod pallet {
     #[pallet::storage]
     #[pallet::getter(fn rewards_record_of)]
     pub(super) type RewardsRecord<T: Config> =
-        StorageValue<_, (u8, Vec<CrtBalance<T>>), ValueQuery>;
+        StorageValue<_, (u8, Vec<BalanceOf<T>>), ValueQuery>;
 
     /// This storage is for the sum over collected block-rewards. This amount will be
     /// transfered to an owner's account, when he requests the online-reward for his
     /// macine.
     #[pallet::storage]
     #[pallet::getter(fn period_reward_of)]
-    pub(super) type PeriodReward<T: Config> = StorageValue<_, CrtBalance<T>, ValueQuery>;
+    pub(super) type PeriodReward<T: Config> = StorageValue<_, BalanceOf<T>, ValueQuery>;
 
     /// This storage hols the configuration of this pallet. About configurable
     /// parameters have a look at the MorConfig definition/description.
     #[pallet::storage]
     #[pallet::getter(fn mor_config_of)]
-    pub(super) type MorConfigStorage<T: Config> = StorageValue<_, MorConfig<T>, ValueQuery>;
+    pub(super) type MorConfigStorage<T: Config> = StorageValue<_, MorConfig<BalanceOf<T>>, ValueQuery>;
 
 
     /// Possible Event types of this pallet.
@@ -205,13 +209,17 @@ pub mod pallet {
     #[pallet::generate_deposit(pub(super) fn deposit_event)]
     pub enum Event<T: Config> {
         /// Machine has been rewarded by minting tokens.
-        RewardsMinted(T::AccountId, CrtBalance<T>),
+        RewardsMinted(T::AccountId, BalanceOf<T>),
         /// Machine owner has been rewarded by tokens from the pot.
-        RewardsFromPot(T::AccountId, CrtBalance<T>),
+        RewardsFromPot(T::AccountId, BalanceOf<T>),
+        /// The pallet's configuration has been updated.
+        MorConfigChanged(MorConfig<BalanceOf<T>>),
+        /// Fetches the pallet's configuration.
+        FetchedMorConfig(MorConfig<BalanceOf<T>>),
         /// Temporary for development. Fetched balance of MOR pot.
-        FetchedPotBalance(CrtBalance<T>),
+        FetchedPotBalance(BalanceOf<T>),
         /// Temporary for development. Fetched current amount of rewarding.
-        FetchedCurrentRewarding(CrtBalance<T>),
+        FetchedCurrentRewarding(BalanceOf<T>),
     }
 
     /// For description of error types, please have a look into module error for
@@ -242,18 +250,14 @@ pub mod pallet {
 
     #[pallet::genesis_config]
 	pub struct GenesisConfig<T: Config> {
-		pub mor_config: MorConfig<T>,
-		// pub block_issue_reward: BalanceOf<T>,
-		// pub hard_cap: BalanceOf<T>,
+		pub mor_config: MorConfig<BalanceOf<T>>,
 	}
 
 	#[cfg(feature = "std")]
 	impl<T: Config> Default for GenesisConfig<T> {
 		fn default() -> Self {
 			Self {
-				mor_config: MorConfig::<T>::default(),
-				// block_issue_reward: Default::default(),
-				// hard_cap: Default::default(),
+				mor_config: MorConfig::<BalanceOf<T>>::default(),
 			}
 		}
 	}
@@ -262,10 +266,21 @@ pub mod pallet {
 	impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
 		fn build(&self) {
 			MorConfigStorage::<T>::put(self.mor_config.clone());
-			// BlockIssueReward::<T>::put(self.block_issue_reward);
-			// HardCap::<T>::put(self.hard_cap);
 		}
 	}
+
+    #[cfg(feature = "std")]
+    impl<T: Config> GenesisConfig<T> {
+        /// Direct implementation of `GenesisBuild::build_storage`.
+        pub fn build_storage(&self) -> Result<sp_runtime::Storage, String> {
+            <Self as GenesisBuild<T>>::build_storage(self)
+        }
+
+        /// Direct implementation of `GenesisBuild::assimilate_storage`.
+        pub fn assimilate_storage(&self, storage: &mut sp_runtime::Storage) -> Result<(), String> {
+            <Self as GenesisBuild<T>>::assimilate_storage(self, storage)
+        }
+    }
 
 
     // Dispatchable functions allows users to interact with the pallet and invoke state changes.
@@ -273,12 +288,11 @@ pub mod pallet {
     // Dispatchable functions must be annotated with a weight and must return a DispatchResult.
     #[pallet::call]
     impl<T: Config> Pallet<T>
-    where CrtBalance<T>: From<u64> + From<u128>
     {
         /// Registers a new machine on the network by given account-ID and machine-ID. This
         /// method will raise errors if the machine is already registered, or if the
         /// authorization in Peaq-DID fails.
-        #[pallet::weight(CrtWeight::<T>::some_extrinsic())]
+        #[pallet::weight(<WeightOf<T>>::some_extrinsic())]
         pub fn register_new_machine(origin: OriginFor<T>, machine: T::AccountId) -> DispatchResult {
             let sender = ensure_signed(origin)?;
 
@@ -291,7 +305,7 @@ pub mod pallet {
         /// on the network for a defined time period, see MorConfig. This method will raise
         /// errors if the authorization in Peaq-DID fails or if the machine is not registered
         /// in Peaq-MOR.
-        #[pallet::weight(CrtWeight::<T>::some_extrinsic())]
+        #[pallet::weight(<WeightOf<T>>::some_extrinsic())]
         pub fn get_online_rewards(origin: OriginFor<T>, machine: T::AccountId) -> DispatchResult {
             let sender = ensure_signed(origin)?;
 
@@ -303,21 +317,48 @@ pub mod pallet {
         /// When using a machine, this extrinsic is about to pay the fee for the machine usage.
         /// Assumption is, that the origin is the user, which used the machine and he will pay
         /// the fee for machine usage.
-        #[pallet::weight(CrtWeight::<T>::some_extrinsic())]
+        #[pallet::weight(<WeightOf<T>>::some_extrinsic())]
         pub fn pay_machine_usage(
             origin: OriginFor<T>,
             machine: T::AccountId,
-            amount: CrtBalance<T>,
+            amount: BalanceOf<T>,
         ) -> DispatchResult {
             let sender = ensure_signed(origin)?;
 
             T::Currency::transfer(&sender, &machine, amount, ExistenceRequirement::KeepAlive)
         }
 
+        /// Updates the pallet's configuration parameters by passing a MorConfig-struct.
+        #[pallet::weight(<WeightOf<T>>::some_extrinsic())]
+        pub fn set_configuration(
+            origin: OriginFor<T>,
+            config: MorConfig<BalanceOf<T>>,
+        ) -> DispatchResult {
+            ensure_root(origin)?;
+
+            <MorConfigStorage<T>>::put(config.clone());
+
+            Self::deposit_event(Event::<T>::MorConfigChanged(config));
+            Ok(())
+        }
+
+        /// Updates the pallet's configuration parameters by passing a MorConfig-struct.
+        #[pallet::weight(<WeightOf<T>>::some_extrinsic())]
+        pub fn fetch_configuration(
+            origin: OriginFor<T>,
+        ) -> DispatchResult {
+            ensure_root(origin)?;
+
+            let config = <MorConfigStorage<T>>::get();
+
+            Self::deposit_event(Event::<T>::FetchedMorConfig(config));
+            Ok(())
+        }
+
         /// This is temporary for debug and development
-        #[pallet::weight(CrtWeight::<T>::some_extrinsic())]
+        #[pallet::weight(<WeightOf<T>>::some_extrinsic())]
         pub fn fetch_pot_balance(origin: OriginFor<T>) -> DispatchResult {
-            ensure_signed(origin)?;
+            ensure_root(origin)?;
 
             let pot: T::AccountId = T::PotId::get().into_account_truncating();
             let amount = T::Currency::free_balance(&pot);
@@ -327,9 +368,9 @@ pub mod pallet {
         }
 
         /// This is temporary for debug and development
-        #[pallet::weight(CrtWeight::<T>::some_extrinsic())]
+        #[pallet::weight(<WeightOf<T>>::some_extrinsic())]
         pub fn fetch_period_rewarding(origin: OriginFor<T>) -> DispatchResult {
-            ensure_signed(origin)?;
+            ensure_root(origin)?;
 
             let amount = <PeriodReward<T>>::get();
 
@@ -339,10 +380,9 @@ pub mod pallet {
     }
 
     // See MorBalance trait definition for further details
-    impl<T: Config> MorBalance<T::AccountId, CrtBalance<T>> for Pallet<T>
-    where CrtBalance<T>: From<u64> + From<u128>
+    impl<T: Config> MorBalance<T::AccountId, BalanceOf<T>> for Pallet<T>
     {
-        fn mint_to_account(account: &T::AccountId, amount: CrtBalance<T>) -> DispatchResult {
+        fn mint_to_account(account: &T::AccountId, amount: BalanceOf<T>) -> DispatchResult {
             // let mut total_imbalance = <CrtPosImbalance<T>>::zero();
 
             // See https://substrate.recipes/currency-imbalances.html
@@ -354,7 +394,7 @@ pub mod pallet {
             Ok(())
         }
 
-        fn transfer_from_pot(account: &T::AccountId, amount: CrtBalance<T>) -> DispatchResult {
+        fn transfer_from_pot(account: &T::AccountId, amount: BalanceOf<T>) -> DispatchResult {
             let pot: T::AccountId = T::PotId::get().into_account_truncating();
 
             if T::Currency::free_balance(&pot) >= amount {
@@ -366,14 +406,14 @@ pub mod pallet {
             }
         }
 
-        fn log_block_rewards(amount: CrtBalance<T>) {
+        fn log_block_rewards(amount: BalanceOf<T>) {
             let mor_config = <MorConfigStorage<T>>::get();
             let n_blocks = mor_config.time_period_blocks;
             if !<RewardsRecord<T>>::exists() {
-                <RewardsRecord<T>>::set((1u8, vec![<CrtBalance<T>>::from(0u128); n_blocks]));
+                <RewardsRecord<T>>::set((1u8, vec![<BalanceOf<T>>::zero(); n_blocks as usize]));
             }
 
-            // RewardsRecord: (u8, Vec<CrtBalance<T>>)
+            // RewardsRecord: (u8, Vec<BalanceOf<T>>)
             // Next array-slot to write in, Array of imbalances
             let (mut slot_cnt, mut balances) = <RewardsRecord<T>>::get();
             balances[slot_cnt as usize] = amount;
@@ -382,9 +422,9 @@ pub mod pallet {
                 slot_cnt = 0;
             }
 
-            // PeriodReward: CrtBalance<T>
+            // PeriodReward: BalanceOf<T>
             // Sum of last n_blocks block-rewards
-            let mut period_reward = <CrtBalance<T>>::from(0u128);
+            let mut period_reward = <BalanceOf<T>>::zero();
             // Workarround, skip some block rewards to gain always positive balance
             balances.iter().skip(5).for_each(|&b| period_reward += b);
 
@@ -394,13 +434,12 @@ pub mod pallet {
     }
 
     // See MorMachine trait description for further details
-    impl<T: Config> MorMachine<T::AccountId, CrtBalance<T>> for Pallet<T>
-    where CrtBalance<T>: From<u64> + From<u128>
+    impl<T: Config> MorMachine<T::AccountId, BalanceOf<T>> for Pallet<T>
     {
         fn register_machine(
             owner: &T::AccountId,
             machine: &T::AccountId,
-        ) -> MorResult<CrtBalance<T>> {
+        ) -> MorResult<BalanceOf<T>> {
             // Registered in Peaq-DID and is this the owner?
             DidPallet::<T>::is_owner(&owner, &machine).map_err(MorError::from)?;
 
@@ -409,16 +448,17 @@ pub mod pallet {
                 Err(MorError::MachineAlreadyRegistered)
             } else {
                 let owner_hash = (owner).using_encoded(blake2_256);
+                let config = <MorConfigStorage<T>>::get();
                 <MachineRegister<T>>::insert(machine_hash, owner_hash);
                 // 1 AGNG = 1_000_000_000_000_000_000
-                Ok(<CrtBalance<T>>::from(100_000_000_000_000_000u128))
+                Ok(<BalanceOf<T>>::from(config.registration_reward))
             }
         }
 
         fn reward_machine(
             owner: &T::AccountId,
             machine: &T::AccountId,
-        ) -> MorResult<CrtBalance<T>> {
+        ) -> MorResult<BalanceOf<T>> {
             // Is still registered in Peaq-DID and is this the owner?
             DidPallet::<T>::is_owner(owner, machine).map_err(MorError::from)?;
             // Is machine registered in Peaq-MOR?

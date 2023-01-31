@@ -2,8 +2,11 @@
 
 use frame_support::{assert_noop, assert_ok};
 use sp_core::sr25519::Public;
-// use sp_std::vec;
-use crate::{mock::*, types::CrtBalance, Error};
+use crate::{
+    mock::*,
+    types::{BalanceOf, MorConfig},
+    Error
+};
 
 // Defined in moch.rs:
 // const O_ACCT: &'static str
@@ -33,6 +36,7 @@ fn register_machine_mor(owner: Public, machine: Public) {
         machine
     ));
 }
+
 
 #[test]
 fn register_new_machine_test() {
@@ -89,7 +93,7 @@ fn pay_machine_usage_test() {
     new_test_ext().execute_with(|| {
         let muser = account_key(U_ACCT);
         let machine = account_key(M_ACCT);
-        let amount = CrtBalance::<Test>::from(1_000_000u32);
+        let amount = BalanceOf::<Test>::from(1_000_000u32);
 
         // Try to pay for machine usage.
         // Expect no error.
@@ -99,4 +103,22 @@ fn pay_machine_usage_test() {
             amount
         ));
     });
+}
+
+#[test]
+fn set_configuration_test() {
+    new_test_ext().execute_with(|| {
+        let sudo = account_key(S_ACCT);
+        let config = MorConfig{
+            registration_reward: BalanceOf::<Test>::from(500_000_000_000_000_000u128),
+            time_period_blocks: 100,
+        };
+
+        // Try to set new configuration for the pallet.
+        // Expect no error.
+        assert_ok!(PeaqMor::set_configuration(
+            Origin::signed(sudo),
+            config
+        ));
+    });   
 }

@@ -1,7 +1,8 @@
 //! Runtime mockup with this pallet for testing purposes.
 use crate as peaq_pallet_mor;
+use crate::types::{BalanceOf, MorConfig};
+
 use frame_support::{parameter_types, PalletId};
-use frame_system as system;
 use pallet_balances;
 use pallet_timestamp;
 use sp_core::{sr25519, Pair, H256};
@@ -13,7 +14,7 @@ use sp_runtime::{
 // system
 type Block = frame_system::mocking::MockBlock<Test>;
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
-// peaq-pallet-mor
+// pallet-balances
 pub type BalancesType = u128;
 
 // Configure a mock runtime to test the pallet.
@@ -24,15 +25,16 @@ frame_support::construct_runtime!(
         UncheckedExtrinsic = UncheckedExtrinsic,
     {
         System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
+        Sudo: pallet_sudo::{Pallet, Call, Config<T>, Storage, Event<T>},
         Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent},
         Balances: pallet_balances::{Pallet, Call, Config<T>, Storage, Event<T>},
         PeaqDid: peaq_pallet_did::{Pallet, Call, Storage, Event<T>},
-        PeaqMor: peaq_pallet_mor::{Pallet, Call, Storage, Event<T>},
+        PeaqMor: peaq_pallet_mor::{Pallet, Call, Config<T>, Storage, Event<T>},
     }
 );
 
 parameter_types! {
-    // system
+    // frame_system
     pub const BlockHashCount: u64 = 250;
     pub const SS58Prefix: u8 = 42;
     // pallet_timestamp
@@ -44,7 +46,7 @@ parameter_types! {
     pub const MaxLocks: u32 = 50;
 }
 
-impl system::Config for Test {
+impl frame_system::Config for Test {
     type BaseCallFilter = frame_support::traits::Everything;
     type BlockWeights = ();
     type BlockLength = ();
@@ -69,6 +71,11 @@ impl system::Config for Test {
     type SS58Prefix = SS58Prefix;
     type OnSetCode = ();
     type MaxConsumers = frame_support::traits::ConstU32<16>;
+}
+
+impl pallet_sudo::Config for Test {
+	type Event = Event;
+	type Call = Call;
 }
 
 impl pallet_timestamp::Config for Test {
@@ -104,22 +111,27 @@ impl peaq_pallet_mor::Config for Test {
 }
 
 // Some constants for the test
-pub(crate) const O_ACCT: &'static str = "Alice";
-pub(crate) const U_ACCT: &'static str = "SomeUser";
-pub(crate) const M_ACCT: &'static str = "RPi001";
+pub(crate) const O_ACCT: &'static str = "Alice"; // Owner
+pub(crate) const S_ACCT: &'static str = "Alice"; // Sudo
+pub(crate) const U_ACCT: &'static str = "SomeUser"; // User
+pub(crate) const M_ACCT: &'static str = "RPi001"; // Machine
 
 // Build genesis storage according to the mock runtime.
 pub fn new_test_ext() -> sp_io::TestExternalities {
-    let mut test_ext = system::GenesisConfig::default()
+    let mut test_ext = frame_system::GenesisConfig::default()
         .build_storage::<Test>()
         .unwrap()
         .into();
 
     //  creates a default balance for the owner account
     let owner = account_key(O_ACCT);
+    // let sudo = account_key(S_ACCT);
     let user = account_key(U_ACCT);
     let machine = account_key(M_ACCT);
     let mor_pot = PotId::get().into_account_truncating();
+
+    // setup genesis configuration details
+    // TODO: set a sudo to make set_configuration_test() working
 
     pallet_balances::GenesisConfig::<Test> {
         balances: vec![
@@ -131,6 +143,16 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
     }
     .assimilate_storage(&mut test_ext)
     .unwrap();
+
+    peaq_pallet_mor::GenesisConfig::<Test> {
+        mor_config: MorConfig{
+            registration_reward: BalanceOf::<Test>::from(100_000_000_000_000_000u128),
+            time_period_blocks: 200u8,
+        },
+    }
+    .assimilate_storage(&mut test_ext)
+    .unwrap();
+
     test_ext.into()
 }
 

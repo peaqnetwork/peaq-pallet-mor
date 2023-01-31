@@ -1436,6 +1436,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-sudo"
+version = "4.0.0-dev"
+source = "git+https://github.com/peaqnetwork/substrate?branch=peaq-polkadot-v0.9.29#91ad2fcb1a76a7ee4d81b2039824524307a6b54f"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "pallet-timestamp"
 version = "4.0.0-dev"
 source = "git+https://github.com/peaqnetwork/substrate?branch=peaq-polkadot-v0.9.29#91ad2fcb1a76a7ee4d81b2039824524307a6b54f"
@@ -1585,6 +1599,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "pallet-balances",
+ "pallet-sudo",
  "pallet-timestamp",
  "parity-scale-codec",
  "peaq-pallet-did",
