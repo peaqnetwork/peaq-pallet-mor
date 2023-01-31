@@ -19,13 +19,25 @@
 //!
 //! ### Terminology
 //!
-//! - **Machine:** TODO.
+//! - **Machine:** By machine a true device in real world is meant, e.g. a charging station
+//!     or electrical car. For demonstration purpose this can be a Raspberry Pi. A machine
+//!     has its own account and will be identified by the Peaq-DID pallet.
 //!
-//! - **Owner:** TODO
+//! - **Machine owner:** In abstract here we talk about a person who owns that machine and
+//!     will administrate it. In a blockchain's point of view we talk about an account.
 //!
-//! - **Machine-Description:** TODO
+//! - **Reward:** Rewards are fungible tokens, which will be transfered either to the machine
+//!     owner's account or the machine's account directly. Rewarding means the transfer of
+//!     fungible tokens to an account (from the machine or its owner).
 //!
-//! - **Reward:** TODO
+//! - **Pot:** This pallet has a seperate account to administrate collected block-rewards and
+//!     to be able to distribute them to machines and machine owners.
+//!
+//! - **Defined time period:** You will read several times the term "defined time period".
+//!     When machines are online, they will not be rewarded by each block finalization. Instead
+//!     they will get rewarded after a time period, e.g. 20 minutes. This time period is interally
+//!     defined and machines will be tracked if they have been online on the network for that time
+//!     period. After that time period machines were online, they can be rewarded.
 //!  
 //! ### Rewarding
 //!
@@ -69,7 +81,7 @@
 //!         {
 //!             System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
 //!             // ...
-//!             PeaqMor: peaq_pallet_mor::{Pallet, Call, Config, Storage, Event<T>}
+//!             PeaqMor: peaq_pallet_mor::{Pallet, Call, Config<T>, Storage, Event<T>}
 //!         }
 //!     }
 //!     ```
@@ -85,7 +97,14 @@
 //! - `get_online_rewards` - Machine owners can be rewarded for having their machines
 //!     continiously online on the network.
 //!
-//! - `pay_machine_usage` - TODO
+//! - `pay_machine_usage` - Simulates the payment of a used machine. The user pays the
+//!     machine directly.
+//!
+//! - `set_configuration` - Setting a new pallet configuration. This can only be done
+//!     by a sudo-user. For details about configuration have a look at the definition
+//!     of `MorConfig`.
+//!
+//! - Remaining methods are temporary for development and debug purpose.
 //!
 
 #![cfg_attr(not(feature = "std"), no_std)]
@@ -429,7 +448,7 @@ pub mod pallet {
             machine: &T::AccountId,
         ) -> MorResult<BalanceOf<T>> {
             // Registered in Peaq-DID and is this the owner?
-            DidPallet::<T>::is_owner(&owner, &machine).map_err(MorError::from)?;
+            DidPallet::<T>::is_owner(owner, machine).map_err(MorError::from)?;
 
             let machine_hash = (machine).using_encoded(blake2_256);
             if <MachineRegister<T>>::contains_key(machine_hash) {
@@ -439,7 +458,7 @@ pub mod pallet {
                 let config = <MorConfigStorage<T>>::get();
                 <MachineRegister<T>>::insert(machine_hash, owner_hash);
                 // 1 AGNG = 1_000_000_000_000_000_000
-                Ok(<BalanceOf<T>>::from(config.registration_reward))
+                Ok(config.registration_reward)
             }
         }
 
