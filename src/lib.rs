@@ -90,9 +90,9 @@
 //!
 //! ### Dispatchable Functions (Extrinsics)
 //!
-//! - `register_new_machine` - As it says, to register a new machine with an unique
-//!     machine-ID. Machines can only be registered once, and not be deleted. If you
-//!     want to remove a machine, you can disable it.
+//! - `get_registration_reward` - As it says, after registering a new machine with to
+//!     Peaq-DID, a reward can be collected once per machine (identified by the machine's
+//!     account-ID).
 //!
 //! - `get_online_rewards` - Machine owners can be rewarded for having their machines
 //!     continiously online on the network.
@@ -304,7 +304,7 @@ pub mod pallet {
         /// method will raise errors if the machine is already registered, or if the
         /// authorization in Peaq-DID fails.
         #[pallet::weight(<WeightOf<T>>::some_extrinsic())]
-        pub fn register_new_machine(origin: OriginFor<T>, machine: T::AccountId) -> DispatchResult {
+        pub fn get_registration_reward(origin: OriginFor<T>, machine: T::AccountId) -> DispatchResult {
             let sender = ensure_signed(origin)?;
 
             let reward = Self::register_machine(&sender, &machine).map_err(Error::<T>::from_mor)?;

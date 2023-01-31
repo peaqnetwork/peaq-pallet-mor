@@ -29,10 +29,10 @@ fn register_machine_did(owner: Public, machine: Public) {
     ));
 }
 
-fn register_machine_mor(owner: Public, machine: Public) {
-    // Register new machine on Peaq-MOR.
+fn get_registration_reward_mor(owner: Public, machine: Public) {
+    // Request rewards for new machine on Peaq-MOR.
     // Expect no error.
-    assert_ok!(PeaqMor::register_new_machine(
+    assert_ok!(PeaqMor::get_registration_reward(
         Origin::signed(owner),
         machine
     ));
@@ -47,12 +47,12 @@ fn register_new_machine_test() {
         // Try to register new machine on Peaq-MOR, which is not registered in Peaq-DID.
         // Expect error DidAuthorizationFailed.
         assert_noop!(
-            PeaqMor::register_new_machine(Origin::signed(owner), machine),
+            PeaqMor::get_registration_reward(Origin::signed(owner), machine),
             Error::<Test>::DidAuthorizationFailed
         );
 
         register_machine_did(owner, machine);
-        register_machine_mor(owner, machine);
+        get_registration_reward_mor(owner, machine);
     });
 }
 
@@ -80,7 +80,7 @@ fn get_online_rewards_test() {
         );
 
         // Now register machine in Peaq-MOR too.
-        register_machine_mor(owner, machine);
+        get_registration_reward_mor(owner, machine);
 
         // Now get the online rewards.
         // Expect no error.
