@@ -27,6 +27,8 @@ pub enum MorError {
     /// Sent when an unexpected Peaq-DID error occurs. This means, return
     /// to developer of the Peaq-MOR pallet.
     UnexpectedDidError,
+    /// Sent when the amount of a machine usage payment is out of the configured range.
+    MachinePaymentOutOfRange,
     /// Sent when there are not enough tokens to withdrawel from the pot.
     InsufficientTokensInPot,
 }

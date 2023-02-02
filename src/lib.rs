@@ -150,7 +150,8 @@ pub mod pallet {
             MorError,
             MorError::{
                 DidAuthorizationFailed, InsufficientTokensInPot, MachineAlreadyRegistered,
-                MachineNotRegistered, MorAuthorizationFailed, UnexpectedDidError,
+                MachineNotRegistered, MorAuthorizationFailed, MachinePaymentOutOfRange,
+                UnexpectedDidError,
             },
             MorResult,
         },
@@ -245,6 +246,7 @@ pub mod pallet {
         DidAuthorizationFailed,
         MorAuthorizationFailed,
         UnexpectedDidError,
+        MachinePaymentOutOfRange,
         InsufficientTokensInPot,
     }
 
@@ -256,6 +258,7 @@ pub mod pallet {
                 DidAuthorizationFailed => Error::<T>::DidAuthorizationFailed.into(),
                 MorAuthorizationFailed => Error::<T>::MorAuthorizationFailed.into(),
                 UnexpectedDidError => Error::<T>::UnexpectedDidError.into(),
+                MachinePaymentOutOfRange => Error::<T>::MachinePaymentOutOfRange.into(),
                 InsufficientTokensInPot => Error::<T>::InsufficientTokensInPot.into(),
             }
         }
@@ -332,11 +335,17 @@ pub mod pallet {
         pub fn pay_machine_usage(
             origin: OriginFor<T>,
             machine: T::AccountId,
-            amount: BalanceOf<T>,
+            #[pallet::compact] amount: BalanceOf<T>,
         ) -> DispatchResult {
-            let sender = ensure_signed(origin)?;
+            ensure_signed(origin)?;
 
-            T::Currency::transfer(&sender, &machine, amount, ExistenceRequirement::KeepAlive)
+            let config = <MorConfigStorage<T>>::get();
+
+            if config.machine_usage_fee_min > amount || amount > config.machine_usage_fee_max {
+                Err(Error::<T>::from_mor(MachinePaymentOutOfRange))
+            } else {
+                Self::mint_to_account(&machine, amount)
+            }
         }
 
         /// Updates the pallet's configuration parameters by passing a MorConfig-struct.
@@ -416,7 +425,7 @@ pub mod pallet {
 
         fn log_block_rewards(amount: BalanceOf<T>) {
             let mor_config = <MorConfigStorage<T>>::get();
-            let n_blocks = mor_config.time_period_blocks;
+            let n_blocks = mor_config.track_n_block_rewards;
             if !<RewardsRecord<T>>::exists() {
                 <RewardsRecord<T>>::set((1u8, vec![<BalanceOf<T>>::zero(); n_blocks as usize]));
             }

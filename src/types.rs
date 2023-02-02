@@ -23,18 +23,28 @@ pub struct MorConfig<Balance: Zero> {
     /// How much tokens a machine owner gets rewarded, when registering a new machine on the network.
     #[codec(compact)]
     pub registration_reward: Balance,
-    /// Defines how much time is one period (to be online to get rewarded).
+    /// Minimum balance limit for machine usage payments
     #[codec(compact)]
-    pub time_period_blocks: u8,
+    pub machine_usage_fee_min: Balance,
+    /// Maximum balance limit for machine usage payments
+    #[codec(compact)]
+    pub machine_usage_fee_max: Balance,
+    /// Defines how much how much block rewards will be tracked in the past (to build a sum of them)
+    #[codec(compact)]
+    pub track_n_block_rewards: u8,
 }
 
 impl<Balance: Zero> Default for MorConfig<Balance> {
     fn default() -> Self {
         MorConfig {
-            // This should be 100_000_000_000_000_000, but requires to many trait bounds
+            // Because Balance can only be set to zero to keep the pallet
+            // as generic as possible - set every parameter to zero!
+            // -> an initial configuration has to be done in Genesis or
+            //    after deployment...
             registration_reward: Balance::zero(),
-            // Equals 20 minutes
-            time_period_blocks: 200,
+            machine_usage_fee_min: Balance::zero(),
+            machine_usage_fee_max: Balance::zero(),
+            track_n_block_rewards: 0,
         }
     }
 }
