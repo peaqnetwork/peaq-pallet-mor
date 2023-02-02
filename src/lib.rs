@@ -85,6 +85,24 @@
 //!         }
 //!     }
 //!     ```
+//! 
+//! - Add/configure genesis configuration `GenesisConfig<T>`:
+//!     ```ignore
+//!     GenesisConfig {
+//!		system: SystemConfig {
+//!			// Add Wasm runtime to storage.
+//!			code: wasm_binary.to_vec(),
+//!		},
+//!     // ...
+//!     peaq_mor: PeaqMorConfig {
+//!			mor_config: MorConfig {
+//!				registration_reward: 100_000_000_000_000_000u128,
+//!				machine_usage_fee_min: 1_000u128,
+//!				machine_usage_fee_max: 3_000_000_000_000_000_000u128,
+//!				track_n_block_rewards: 200,
+//!			},
+//!		},
+//!     ```
 //!
 //! - Implement a mechanism to fill that Pot-account `PotMorId`
 //!
@@ -92,13 +110,14 @@
 //!
 //! - `get_registration_reward` - As it says, after registering a new machine with to
 //!     Peaq-DID, a reward can be collected once per machine (identified by the machine's
-//!     account-ID).
+//!     account-ID). Tokens will be minted.
 //!
 //! - `get_online_rewards` - Machine owners can be rewarded for having their machines
-//!     continiously online on the network.
+//!     continiously online on the network. Tokens will be transfered from the pallet's
+//!     pot to the account of the machine owner.
 //!
-//! - `pay_machine_usage` - Simulates the payment of a used machine. The user pays the
-//!     machine directly.
+//! - `pay_machine_usage` - Simulates the payment of a used machine. Tokens will be
+//!     minted, because currently users have no tokens on their accounts.
 //!
 //! - `set_configuration` - Setting a new pallet configuration. This can only be done
 //!     by a sudo-user. For details about configuration have a look at the definition

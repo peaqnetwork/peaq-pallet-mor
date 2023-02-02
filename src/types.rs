@@ -62,27 +62,3 @@ impl<Balance: BalanceT> Default for MorConfig<Balance> {
         }
     }
 }
-
-
-// /// TODO
-// #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
-// #[derive(PartialEq, Eq, Clone, Encode, Decode, RuntimeDebug, TypeInfo)]
-// pub struct RewardRecord<Balance>(u8, Vec<Balance>);
-
-// impl<Balance: BalanceT> Default for RewardRecord<Balance> {
-//     fn default() -> Self {
-//         RewardRecord(0u8, vec![Balance::zero(); 1])
-//     }
-// }
-
-
-// /// TODO
-// #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
-// #[derive(PartialEq, Eq, Clone, Encode, Decode, RuntimeDebug, TypeInfo)]
-// pub struct PeriodReward<Balance>(Balance);
-
-// impl<Balance: BalanceT> Default for PeriodReward<Balance> {
-//     fn default() -> Self {
-//         PeriodReward(Balance::zero())
-//     }
-// }

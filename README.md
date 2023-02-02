@@ -20,9 +20,13 @@ The Peaq-MOR pallet supports the distribution of rewards to machine owners. Bloc
 
 - `get_registration_reward` - The owner of a machine can, after adding at least one attribute of the machine to the Peaq-DID pallet, request rewards for registering his machine and will get rewarded. The rewards will be paid on his account. This reward will be minted by the blockchain.
 
-- `get_online_rewards` - An owner of a machine can request rewards for having its machine online for a defined time period. These rewards can be requested for each machine beeing continiously online on the network. This reward will be taken out of the pallet's pot. The amount will have the same scalar of the amount of tokens, the Peaq-MOR pallet has collected within that defined time period.
+- `get_online_rewards` - An owner of a machine can request rewards for having its machine online for a defined time period. These rewards can be requested for each machine beeing continiously online on the network. This reward will be taken out of the pallet's pot. The amount will have the same scalar of the amount of tokens, the Peaq-MOR pallet has collected within that defined time period in the past.
 
-- `pay_machine_usage` - If another user want to use a machine, he has to pay for the usage of that machine. This will be simulated by this extrinsic. When calling the fee for machine usage will be taken from the user's account who used the machine and will be transfered to the machine's account.
+- `pay_machine_usage` - If another user want to use a machine, he has to pay for the usage of that machine. This will be simulated by this extrinsic. When the tokens will be minted. The amount of tokens is limited. This minimum and maximum limit of tokens to be transfered can be configured.
+
+- `set_configuration` - Setting a new pallet configuration. This can only be done by a sudo-user. For details about configuration have a look at the definition of `MorConfig`.
+
+- Remaining methods are temporary for development and debug purpose.
 
 ### Reward Pot
 
