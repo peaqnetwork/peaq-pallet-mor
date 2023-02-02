@@ -19,6 +19,10 @@ pub trait MorBalance<AccountId, Balance> {
     /// When a machine owner requests the online-reward he shall be rewarded in the same
     /// amount, that has been collected in the last time period.
     fn log_block_rewards(amount: Balance);
+
+    /// When the configuration of the pallet will be changed, the storage size changes
+    /// too. This method will reorganize the storage of the pallet and adapt its content.
+    fn resize_track_storage(new_size: u8);
 }
 
 /// The trait `MorMachine` encapsules adminstrative methods related to machines.

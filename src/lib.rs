@@ -139,7 +139,7 @@ pub mod pallet {
     };
     use frame_system::pallet_prelude::*;
     use sp_io::hashing::blake2_256;
-    use sp_runtime::traits::{AccountIdConversion, Zero};
+    use sp_runtime::traits::{AccountIdConversion, Zero, One};
     use sp_std::{vec, vec::Vec};
 
     use peaq_pallet_did::{did::Did, Pallet as DidPallet};
@@ -150,8 +150,8 @@ pub mod pallet {
             MorError,
             MorError::{
                 DidAuthorizationFailed, InsufficientTokensInPot, MachineAlreadyRegistered,
-                MachineNotRegistered, MorAuthorizationFailed, MachinePaymentOutOfRange,
-                UnexpectedDidError,
+                MachineNotRegistered, MachinePaymentOutOfRange, MorAuthorizationFailed,
+                MorConfigIsNotConsistent, UnexpectedDidError
             },
             MorResult,
         },
@@ -168,7 +168,7 @@ pub mod pallet {
     #[pallet::config]
     pub trait Config: frame_system::Config + peaq_pallet_did::Config
     where
-        BalanceOf<Self>: Zero,
+        BalanceOf<Self>: Zero + One + PartialOrd + Eq,
     {
         /// Because this pallet emits events, it depends on the runtime's definition of an event.
         type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
@@ -203,14 +203,14 @@ pub mod pallet {
     /// Vec of balances of collected block-rewards.
     #[pallet::storage]
     #[pallet::getter(fn rewards_record_of)]
-    pub(super) type RewardsRecord<T: Config> = StorageValue<_, (u8, Vec<BalanceOf<T>>), ValueQuery>;
+    pub(super) type RewardsRecordStorage<T: Config> = StorageValue<_, (u8, Vec<BalanceOf<T>>), ValueQuery>;
 
     /// This storage is for the sum over collected block-rewards. This amount will be
     /// transfered to an owner's account, when he requests the online-reward for his
     /// macine.
     #[pallet::storage]
     #[pallet::getter(fn period_reward_of)]
-    pub(super) type PeriodReward<T: Config> = StorageValue<_, BalanceOf<T>, ValueQuery>;
+    pub(super) type PeriodRewardStorage<T: Config> = StorageValue<_, BalanceOf<T>, ValueQuery>;
 
     /// This storage hols the configuration of this pallet. About configurable
     /// parameters have a look at the MorConfig definition/description.
@@ -241,25 +241,27 @@ pub mod pallet {
     /// further informations about error types.
     #[pallet::error]
     pub enum Error<T> {
+        DidAuthorizationFailed,
+        InsufficientTokensInPot,
         MachineAlreadyRegistered,
         MachineNotRegistered,
-        DidAuthorizationFailed,
-        MorAuthorizationFailed,
-        UnexpectedDidError,
         MachinePaymentOutOfRange,
-        InsufficientTokensInPot,
+        MorAuthorizationFailed,
+        MorConfigIsNotConsistent,
+        UnexpectedDidError
     }
 
     impl<T: Config> Error<T> {
         fn from_mor(err: MorError) -> DispatchError {
             match err {
+                DidAuthorizationFailed => Error::<T>::DidAuthorizationFailed.into(),
+                InsufficientTokensInPot => Error::<T>::InsufficientTokensInPot.into(),
                 MachineAlreadyRegistered => Error::<T>::MachineAlreadyRegistered.into(),
                 MachineNotRegistered => Error::<T>::MachineNotRegistered.into(),
-                DidAuthorizationFailed => Error::<T>::DidAuthorizationFailed.into(),
-                MorAuthorizationFailed => Error::<T>::MorAuthorizationFailed.into(),
-                UnexpectedDidError => Error::<T>::UnexpectedDidError.into(),
                 MachinePaymentOutOfRange => Error::<T>::MachinePaymentOutOfRange.into(),
-                InsufficientTokensInPot => Error::<T>::InsufficientTokensInPot.into(),
+                MorAuthorizationFailed => Error::<T>::MorAuthorizationFailed.into(),
+                MorConfigIsNotConsistent => Error::<T>::MorConfigIsNotConsistent.into(),
+                UnexpectedDidError => Error::<T>::UnexpectedDidError.into(),
             }
         }
     }
@@ -281,7 +283,13 @@ pub mod pallet {
     #[pallet::genesis_build]
     impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
         fn build(&self) {
+            assert!(self.mor_config.is_consistent());
+
+            let reward_record = (0u8, vec![BalanceOf::<T>::zero(); self.mor_config.track_n_block_rewards as usize]);
+
             MorConfigStorage::<T>::put(self.mor_config.clone());
+            RewardsRecordStorage::<T>::put(reward_record);
+            PeriodRewardStorage::<T>::put(BalanceOf::<T>::zero());
         }
     }
 
@@ -356,10 +364,14 @@ pub mod pallet {
         ) -> DispatchResult {
             ensure_root(origin)?;
 
-            <MorConfigStorage<T>>::put(config.clone());
-
-            Self::deposit_event(Event::<T>::MorConfigChanged(config));
-            Ok(())
+            if config.is_consistent() {
+                Self::resize_track_storage(config.track_n_block_rewards);
+                <MorConfigStorage<T>>::put(config.clone());
+                Self::deposit_event(Event::<T>::MorConfigChanged(config));
+                Ok(())
+            } else {
+                Err(Error::<T>::from_mor(MorConfigIsNotConsistent))
+            }
         }
 
         /// Updates the pallet's configuration parameters by passing a MorConfig-struct.
@@ -390,7 +402,7 @@ pub mod pallet {
         pub fn fetch_period_rewarding(origin: OriginFor<T>) -> DispatchResult {
             ensure_root(origin)?;
 
-            let amount = <PeriodReward<T>>::get();
+            let amount = <PeriodRewardStorage<T>>::get();
 
             Self::deposit_event(Event::<T>::FetchedCurrentRewarding(amount));
             Ok(())
@@ -405,8 +417,6 @@ pub mod pallet {
             // See https://substrate.recipes/currency-imbalances.html
             T::Currency::deposit_into_existing(account, amount)?;
             Self::deposit_event(Event::<T>::RewardsMinted(account.clone(), amount));
-            // total_imbalance.maybe_subsume(r);
-            // T::Reward::on_unbalanced(total_imbalance);
 
             Ok(())
         }
@@ -426,27 +436,40 @@ pub mod pallet {
         fn log_block_rewards(amount: BalanceOf<T>) {
             let mor_config = <MorConfigStorage<T>>::get();
             let n_blocks = mor_config.track_n_block_rewards;
-            if !<RewardsRecord<T>>::exists() {
-                <RewardsRecord<T>>::set((1u8, vec![<BalanceOf<T>>::zero(); n_blocks as usize]));
-            }
 
-            // RewardsRecord: (u8, Vec<BalanceOf<T>>)
-            // Next array-slot to write in, Array of imbalances
-            let (mut slot_cnt, mut balances) = <RewardsRecord<T>>::get();
+            // RewardsRecordStorage: (u8, Vec<BalanceOf<T>>)
+            // (Next array-slot to write in, vector of imbalances)
+            let (mut slot_cnt, mut balances) = <RewardsRecordStorage<T>>::get();
             balances[slot_cnt as usize] = amount;
             slot_cnt += 1;
             if slot_cnt >= n_blocks {
                 slot_cnt = 0;
             }
 
-            // PeriodReward: BalanceOf<T>
+            // PeriodRewardStorage: BalanceOf<T>
             // Sum of last n_blocks block-rewards
-            let mut period_reward = <BalanceOf<T>>::zero();
-            // Workarround, skip some block rewards to gain always positive balance
-            balances.iter().skip(5).for_each(|&b| period_reward += b);
+            let mut period_reward = BalanceOf::<T>::zero();
+            balances.iter().for_each(|&b| period_reward += b);
 
-            <RewardsRecord<T>>::set((slot_cnt, balances));
-            <PeriodReward<T>>::set(period_reward);
+            <RewardsRecordStorage<T>>::set((slot_cnt, balances));
+            <PeriodRewardStorage<T>>::set(period_reward);
+        }
+
+        fn resize_track_storage(new_size: u8) {
+            let (_slot_cnt, mut balances) = <RewardsRecordStorage<T>>::get();
+
+            let cur_size = balances.len();
+            if cur_size < new_size as usize {
+                balances.resize(new_size as usize, BalanceOf::<T>::zero());
+                let slot_cnt = cur_size as u8;
+                assert!(balances.len() == new_size as usize);
+                <RewardsRecordStorage<T>>::put((slot_cnt, balances));
+            } else if cur_size > new_size as usize {
+                let slot_cnt = 0u8;
+                let balances = balances.split_off((new_size - 1) as usize);
+                assert!(balances.len() == new_size as usize);
+                <RewardsRecordStorage<T>>::put((slot_cnt, balances));
+            }
         }
     }
 
@@ -484,7 +507,7 @@ pub mod pallet {
                 return Err(MorError::MorAuthorizationFailed);
             }
 
-            Ok(<PeriodReward<T>>::get())
+            Ok(<PeriodRewardStorage<T>>::get())
         }
     }
 }
