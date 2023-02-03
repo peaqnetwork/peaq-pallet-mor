@@ -153,7 +153,10 @@ pub mod pallet {
 
     use frame_support::{
         pallet_prelude::*,
-        traits::{Currency, ExistenceRequirement, Get, LockableCurrency, ReservableCurrency},
+        traits::{
+            Currency, ExistenceRequirement, Get, Imbalance, LockableCurrency,
+            ReservableCurrency
+        },
         PalletId,
     };
     use frame_system::pallet_prelude::*;
@@ -170,7 +173,7 @@ pub mod pallet {
             MorError::{
                 DidAuthorizationFailed, InsufficientTokensInPot, MachineAlreadyRegistered,
                 MachineNotRegistered, MachinePaymentOutOfRange, MorAuthorizationFailed,
-                MorConfigIsNotConsistent, UnexpectedDidError
+                MorConfigIsNotConsistent, TokensCouldNotBeTransfered, UnexpectedDidError,
             },
             MorResult,
         },
@@ -267,6 +270,7 @@ pub mod pallet {
         MachinePaymentOutOfRange,
         MorAuthorizationFailed,
         MorConfigIsNotConsistent,
+        TokensCouldNotBeTransfered,
         UnexpectedDidError
     }
 
@@ -280,6 +284,7 @@ pub mod pallet {
                 MachinePaymentOutOfRange => Error::<T>::MachinePaymentOutOfRange.into(),
                 MorAuthorizationFailed => Error::<T>::MorAuthorizationFailed.into(),
                 MorConfigIsNotConsistent => Error::<T>::MorConfigIsNotConsistent.into(),
+                TokensCouldNotBeTransfered => Error::<T>::TokensCouldNotBeTransfered.into(),
                 UnexpectedDidError => Error::<T>::UnexpectedDidError.into(),
             }
         }
@@ -362,7 +367,7 @@ pub mod pallet {
         pub fn pay_machine_usage(
             origin: OriginFor<T>,
             machine: T::AccountId,
-            #[pallet::compact] amount: BalanceOf<T>,
+            amount: BalanceOf<T>,
         ) -> DispatchResult {
             ensure_signed(origin)?;
 
@@ -431,13 +436,17 @@ pub mod pallet {
     // See MorBalance trait definition for further details
     impl<T: Config> MorBalance<T::AccountId, BalanceOf<T>> for Pallet<T> {
         fn mint_to_account(account: &T::AccountId, amount: BalanceOf<T>) -> DispatchResult {
-            // let mut total_imbalance = <CrtPosImbalance<T>>::zero();
+            let imbalance = T::Currency::issue(amount);
+            
+            let amount = imbalance.peek();
 
-            // See https://substrate.recipes/currency-imbalances.html
-            T::Currency::deposit_into_existing(account, amount)?;
-            Self::deposit_event(Event::<T>::RewardsMinted(account.clone(), amount));
-
-            Ok(())
+            match T::Currency::deposit_into_existing(account, amount) {
+                Ok(_d) => {
+                    Self::deposit_event(Event::<T>::RewardsMinted(account.clone(), amount));
+                    Ok(())
+                },
+                Err(err) => Err(err)
+            }
         }
 
         fn transfer_from_pot(account: &T::AccountId, amount: BalanceOf<T>) -> DispatchResult {

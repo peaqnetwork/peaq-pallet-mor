@@ -31,6 +31,8 @@ pub enum MorError {
     /// Sent when tried to update pallet's config, but failed because config
     /// is not consistent.
     MorConfigIsNotConsistent,
+    /// Sent when Tokens could not be transfered, e.g. when minted or taken from pot.
+    TokensCouldNotBeTransfered,
     /// Sent when an unexpected Peaq-DID error occurs. This means, return
     /// to developer of the Peaq-MOR pallet.
     UnexpectedDidError,
