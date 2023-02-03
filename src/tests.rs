@@ -2,6 +2,7 @@
 
 use crate::{
     mock::*,
+    mor::MorBalance,
     types::{BalanceOf, MorConfig},
     Error,
 };
@@ -36,6 +37,20 @@ fn get_registration_reward_mor(owner: Public, machine: Public) {
         Origin::signed(owner),
         machine
     ));
+}
+
+fn def_config(
+    registration_reward: BalanceOf<Test>,
+    machine_usage_fee_min: BalanceOf<Test>,
+    machine_usage_fee_max: BalanceOf<Test>,
+    track_n_block_rewards: u8
+) -> MorConfig<BalanceOf<Test>> {
+    MorConfig {
+        registration_reward,
+        machine_usage_fee_min,
+        machine_usage_fee_max,
+        track_n_block_rewards,
+    }
 }
 
 #[test]
@@ -93,7 +108,8 @@ fn pay_machine_usage_test() {
     new_test_ext().execute_with(|| {
         let muser = account_key(U_ACCT);
         let machine = account_key(M_ACCT);
-        let amount = BalanceOf::<Test>::from(1_000_000u32);
+        let amount = BalanceOf::<Test>::from(500_000_000_000_000_000u128);
+        let amount_oor = BalanceOf::<Test>::from(5_000_000_000_000_000_000u128);
 
         // Try to pay for machine usage.
         // Expect no error.
@@ -102,19 +118,46 @@ fn pay_machine_usage_test() {
             machine,
             amount
         ));
+
+        // Try to pay out of range.
+        // Expect error MachinePaymentOutOfRange.
+        assert_noop!(
+            PeaqMor::pay_machine_usage(
+                Origin::signed(muser),
+                machine,
+                amount_oor
+            ),
+            Error::<Test>::MachinePaymentOutOfRange
+        );
     });
 }
 
 #[test]
 fn set_configuration_test() {
     new_test_ext().execute_with(|| {
-        let config = MorConfig {
-            registration_reward: BalanceOf::<Test>::from(500_000_000_000_000_000u128),
-            time_period_blocks: 100,
-        };
+        let b_low = BalanceOf::<Test>::from(100_000_000_000_000u128);
+        let b_med = BalanceOf::<Test>::from(500_000_000_000_000u128);
+        let b_max = BalanceOf::<Test>::from(2_500_000_000_000_000u128);
 
-        // Try to set new configuration for the pallet.
+        // Try to set invalid configuration (range of balances).
+        // Expect error MorConfigIsNotConsistent.
+        let config = def_config(b_low, b_med, b_med, 50);
+        assert_noop!(
+            PeaqMor::set_configuration(Origin::root(), config),
+            Error::<Test>::MorConfigIsNotConsistent
+        );
+
+        // Try to set invalid configuration (number of blocks).
+        // Expect error MorConfigIsNotConsistent.
+        let config = def_config(b_low, b_med, b_med, 0);
+        assert_noop!(
+            PeaqMor::set_configuration(Origin::root(), config),
+            Error::<Test>::MorConfigIsNotConsistent
+        );
+
+        // Set valid configuration.
         // Expect no error.
+        let config = def_config(b_low, b_med, b_max, 50);
         assert_ok!(PeaqMor::set_configuration(Origin::root(), config));
     });
 }
@@ -170,5 +213,15 @@ fn fetch_period_rewarding_test() {
         // Try to fetch current pot-balance of the pallet.
         // Expect no error.
         assert_ok!(PeaqMor::fetch_period_rewarding(Origin::root()));
+    });
+}
+
+#[test]
+fn log_block_rewards_test() {
+    new_test_ext().execute_with(|| {
+        let balance = BalanceOf::<Test>::from(100_000_000_000_000_000u128);
+        // Try to log new block-reward in default genesis configuration.
+        // Expect no error.
+        PeaqMor::log_block_rewards(balance);
     });
 }

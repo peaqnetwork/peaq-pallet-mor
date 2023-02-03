@@ -85,6 +85,24 @@
 //!         }
 //!     }
 //!     ```
+//! 
+//! - Add/configure genesis configuration `GenesisConfig<T>`:
+//!     ```ignore
+//!     GenesisConfig {
+//!		system: SystemConfig {
+//!			// Add Wasm runtime to storage.
+//!			code: wasm_binary.to_vec(),
+//!		},
+//!     // ...
+//!     peaq_mor: PeaqMorConfig {
+//!			mor_config: MorConfig {
+//!				registration_reward: 100_000_000_000_000_000u128,
+//!				machine_usage_fee_min: 1_000u128,
+//!				machine_usage_fee_max: 3_000_000_000_000_000_000u128,
+//!				track_n_block_rewards: 200,
+//!			},
+//!		},
+//!     ```
 //!
 //! - Implement a mechanism to fill that Pot-account `PotMorId`
 //!
@@ -92,13 +110,14 @@
 //!
 //! - `get_registration_reward` - As it says, after registering a new machine with to
 //!     Peaq-DID, a reward can be collected once per machine (identified by the machine's
-//!     account-ID).
+//!     account-ID). Tokens will be minted.
 //!
 //! - `get_online_rewards` - Machine owners can be rewarded for having their machines
-//!     continiously online on the network.
+//!     continiously online on the network. Tokens will be transfered from the pallet's
+//!     pot to the account of the machine owner.
 //!
-//! - `pay_machine_usage` - Simulates the payment of a used machine. The user pays the
-//!     machine directly.
+//! - `pay_machine_usage` - Simulates the payment of a used machine. Tokens will be
+//!     minted, because currently users have no tokens on their accounts.
 //!
 //! - `set_configuration` - Setting a new pallet configuration. This can only be done
 //!     by a sudo-user. For details about configuration have a look at the definition
@@ -134,12 +153,15 @@ pub mod pallet {
 
     use frame_support::{
         pallet_prelude::*,
-        traits::{Currency, ExistenceRequirement, Get, LockableCurrency, ReservableCurrency},
+        traits::{
+            Currency, ExistenceRequirement, Get, Imbalance, LockableCurrency,
+            ReservableCurrency
+        },
         PalletId,
     };
     use frame_system::pallet_prelude::*;
     use sp_io::hashing::blake2_256;
-    use sp_runtime::traits::{AccountIdConversion, Zero};
+    use sp_runtime::traits::{AccountIdConversion, Zero, One};
     use sp_std::{vec, vec::Vec};
 
     use peaq_pallet_did::{did::Did, Pallet as DidPallet};
@@ -150,13 +172,28 @@ pub mod pallet {
             MorError,
             MorError::{
                 DidAuthorizationFailed, InsufficientTokensInPot, MachineAlreadyRegistered,
-                MachineNotRegistered, MorAuthorizationFailed, UnexpectedDidError,
+                MachineNotRegistered, MachinePaymentOutOfRange, MorAuthorizationFailed,
+                MorConfigIsNotConsistent, TokensCouldNotBeTransfered, UnexpectedDidError,
             },
             MorResult,
         },
         mor::*,
         types::*,
     };
+
+
+    macro_rules! dpatch_dposit_par {
+        ($res:expr, $event:expr) => {
+            match $res {
+                Ok(_d) => {
+                    Self::deposit_event($event);
+                    Ok(())
+                },
+                Err(e) => Err(e),
+            }
+        }
+    }
+
 
     #[pallet::pallet]
     #[pallet::generate_store(pub(super) trait Store)]
@@ -167,7 +204,7 @@ pub mod pallet {
     #[pallet::config]
     pub trait Config: frame_system::Config + peaq_pallet_did::Config
     where
-        BalanceOf<Self>: Zero,
+        BalanceOf<Self>: Zero + One + PartialOrd + Eq,
     {
         /// Because this pallet emits events, it depends on the runtime's definition of an event.
         type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
@@ -202,14 +239,14 @@ pub mod pallet {
     /// Vec of balances of collected block-rewards.
     #[pallet::storage]
     #[pallet::getter(fn rewards_record_of)]
-    pub(super) type RewardsRecord<T: Config> = StorageValue<_, (u8, Vec<BalanceOf<T>>), ValueQuery>;
+    pub(super) type RewardsRecordStorage<T: Config> = StorageValue<_, (u8, Vec<BalanceOf<T>>), ValueQuery>;
 
     /// This storage is for the sum over collected block-rewards. This amount will be
     /// transfered to an owner's account, when he requests the online-reward for his
     /// macine.
     #[pallet::storage]
     #[pallet::getter(fn period_reward_of)]
-    pub(super) type PeriodReward<T: Config> = StorageValue<_, BalanceOf<T>, ValueQuery>;
+    pub(super) type PeriodRewardStorage<T: Config> = StorageValue<_, BalanceOf<T>, ValueQuery>;
 
     /// This storage hols the configuration of this pallet. About configurable
     /// parameters have a look at the MorConfig definition/description.
@@ -223,9 +260,7 @@ pub mod pallet {
     #[pallet::generate_deposit(pub(super) fn deposit_event)]
     pub enum Event<T: Config> {
         /// Machine has been rewarded by minting tokens.
-        RewardsMinted(T::AccountId, BalanceOf<T>),
-        /// Machine owner has been rewarded by tokens from the pot.
-        RewardsFromPot(T::AccountId, BalanceOf<T>),
+        MintedTokens(BalanceOf<T>),
         /// The pallet's configuration has been updated.
         MorConfigChanged(MorConfig<BalanceOf<T>>),
         /// Fetches the pallet's configuration.
@@ -234,29 +269,41 @@ pub mod pallet {
         FetchedPotBalance(BalanceOf<T>),
         /// Temporary for development. Fetched current amount of rewarding.
         FetchedCurrentRewarding(BalanceOf<T>),
+        /// Sent when machine usage has been payed.
+        MachineUsagePayed(T::AccountId, BalanceOf<T>),
+        /// Sent when the online rewards have been transfered.
+        OnlineRewardsPayed(T::AccountId, BalanceOf<T>),
+        /// Sent when a registration rewards have been transfered.
+        RegistrationRewardPayed(T::AccountId, BalanceOf<T>),
     }
 
     /// For description of error types, please have a look into module error for
     /// further informations about error types.
     #[pallet::error]
     pub enum Error<T> {
+        DidAuthorizationFailed,
+        InsufficientTokensInPot,
         MachineAlreadyRegistered,
         MachineNotRegistered,
-        DidAuthorizationFailed,
+        MachinePaymentOutOfRange,
         MorAuthorizationFailed,
-        UnexpectedDidError,
-        InsufficientTokensInPot,
+        MorConfigIsNotConsistent,
+        TokensCouldNotBeTransfered,
+        UnexpectedDidError
     }
 
     impl<T: Config> Error<T> {
         fn from_mor(err: MorError) -> DispatchError {
             match err {
+                DidAuthorizationFailed => Error::<T>::DidAuthorizationFailed.into(),
+                InsufficientTokensInPot => Error::<T>::InsufficientTokensInPot.into(),
                 MachineAlreadyRegistered => Error::<T>::MachineAlreadyRegistered.into(),
                 MachineNotRegistered => Error::<T>::MachineNotRegistered.into(),
-                DidAuthorizationFailed => Error::<T>::DidAuthorizationFailed.into(),
+                MachinePaymentOutOfRange => Error::<T>::MachinePaymentOutOfRange.into(),
                 MorAuthorizationFailed => Error::<T>::MorAuthorizationFailed.into(),
+                MorConfigIsNotConsistent => Error::<T>::MorConfigIsNotConsistent.into(),
+                TokensCouldNotBeTransfered => Error::<T>::TokensCouldNotBeTransfered.into(),
                 UnexpectedDidError => Error::<T>::UnexpectedDidError.into(),
-                InsufficientTokensInPot => Error::<T>::InsufficientTokensInPot.into(),
             }
         }
     }
@@ -278,7 +325,13 @@ pub mod pallet {
     #[pallet::genesis_build]
     impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
         fn build(&self) {
+            assert!(self.mor_config.is_consistent());
+
+            let reward_record = (0u8, vec![BalanceOf::<T>::zero(); self.mor_config.track_n_block_rewards as usize]);
+
             MorConfigStorage::<T>::put(self.mor_config.clone());
+            RewardsRecordStorage::<T>::put(reward_record);
+            PeriodRewardStorage::<T>::put(BalanceOf::<T>::zero());
         }
     }
 
@@ -309,7 +362,10 @@ pub mod pallet {
 
             let reward = Self::register_machine(&sender, &machine).map_err(Error::<T>::from_mor)?;
 
-            Self::mint_to_account(&sender, reward)
+            dpatch_dposit_par!(
+                Self::mint_to_account(&sender, reward.clone()),
+                Event::<T>::RegistrationRewardPayed(sender, reward)
+            )
         }
 
         /// In this early version one can collect rewards for a machine, which has been online
@@ -322,7 +378,10 @@ pub mod pallet {
 
             let reward = Self::reward_machine(&sender, &machine).map_err(Error::<T>::from_mor)?;
 
-            Self::transfer_from_pot(&sender, reward)
+            dpatch_dposit_par!(
+                Self::transfer_from_pot(&sender, reward.clone()),
+                Event::<T>::OnlineRewardsPayed(sender, reward)
+            )
         }
 
         /// When using a machine, this extrinsic is about to pay the fee for the machine usage.
@@ -334,9 +393,19 @@ pub mod pallet {
             machine: T::AccountId,
             amount: BalanceOf<T>,
         ) -> DispatchResult {
-            let sender = ensure_signed(origin)?;
+            ensure_signed(origin)?;
 
-            T::Currency::transfer(&sender, &machine, amount, ExistenceRequirement::KeepAlive)
+            let config = <MorConfigStorage<T>>::get();
+
+            // MachineUsagePayed
+            if config.machine_usage_fee_min > amount || amount > config.machine_usage_fee_max {
+                Err(Error::<T>::from_mor(MachinePaymentOutOfRange))
+            } else {
+                dpatch_dposit_par!(
+                    Self::mint_to_account(&machine, amount.clone()),
+                    Event::<T>::MachineUsagePayed(machine, amount)
+                )
+            }
         }
 
         /// Updates the pallet's configuration parameters by passing a MorConfig-struct.
@@ -347,10 +416,15 @@ pub mod pallet {
         ) -> DispatchResult {
             ensure_root(origin)?;
 
-            <MorConfigStorage<T>>::put(config.clone());
-
-            Self::deposit_event(Event::<T>::MorConfigChanged(config));
-            Ok(())
+            if config.is_consistent() {
+                Self::resize_track_storage(config.track_n_block_rewards);
+                <MorConfigStorage<T>>::put(config.clone());
+                
+                Self::deposit_event(Event::<T>::MorConfigChanged(config));
+                Ok(())
+            } else {
+                Err(Error::<T>::from_mor(MorConfigIsNotConsistent))
+            }
         }
 
         /// Updates the pallet's configuration parameters by passing a MorConfig-struct.
@@ -381,7 +455,7 @@ pub mod pallet {
         pub fn fetch_period_rewarding(origin: OriginFor<T>) -> DispatchResult {
             ensure_root(origin)?;
 
-            let amount = <PeriodReward<T>>::get();
+            let amount = <PeriodRewardStorage<T>>::get();
 
             Self::deposit_event(Event::<T>::FetchedCurrentRewarding(amount));
             Ok(())
@@ -391,15 +465,17 @@ pub mod pallet {
     // See MorBalance trait definition for further details
     impl<T: Config> MorBalance<T::AccountId, BalanceOf<T>> for Pallet<T> {
         fn mint_to_account(account: &T::AccountId, amount: BalanceOf<T>) -> DispatchResult {
-            // let mut total_imbalance = <CrtPosImbalance<T>>::zero();
+            let imbalance = T::Currency::issue(amount);
+            
+            let amount = imbalance.peek();
 
-            // See https://substrate.recipes/currency-imbalances.html
-            T::Currency::deposit_into_existing(account, amount)?;
-            Self::deposit_event(Event::<T>::RewardsMinted(account.clone(), amount));
-            // total_imbalance.maybe_subsume(r);
-            // T::Reward::on_unbalanced(total_imbalance);
-
-            Ok(())
+            match T::Currency::deposit_into_existing(account, amount) {
+                Ok(_d) => {
+                    Self::deposit_event(Event::<T>::MintedTokens(amount));
+                    Ok(())
+                },
+                Err(err) => Err(err)
+            }
         }
 
         fn transfer_from_pot(account: &T::AccountId, amount: BalanceOf<T>) -> DispatchResult {
@@ -407,7 +483,6 @@ pub mod pallet {
 
             if T::Currency::free_balance(&pot) >= amount {
                 T::Currency::transfer(&pot, account, amount, ExistenceRequirement::KeepAlive)?;
-                Self::deposit_event(Event::<T>::RewardsFromPot(account.clone(), amount));
                 Ok(())
             } else {
                 Err(Error::<T>::from_mor(InsufficientTokensInPot))
@@ -416,28 +491,41 @@ pub mod pallet {
 
         fn log_block_rewards(amount: BalanceOf<T>) {
             let mor_config = <MorConfigStorage<T>>::get();
-            let n_blocks = mor_config.time_period_blocks;
-            if !<RewardsRecord<T>>::exists() {
-                <RewardsRecord<T>>::set((1u8, vec![<BalanceOf<T>>::zero(); n_blocks as usize]));
-            }
+            let n_blocks = mor_config.track_n_block_rewards;
 
-            // RewardsRecord: (u8, Vec<BalanceOf<T>>)
-            // Next array-slot to write in, Array of imbalances
-            let (mut slot_cnt, mut balances) = <RewardsRecord<T>>::get();
+            // RewardsRecordStorage: (u8, Vec<BalanceOf<T>>)
+            // (Next array-slot to write in, vector of imbalances)
+            let (mut slot_cnt, mut balances) = <RewardsRecordStorage<T>>::get();
             balances[slot_cnt as usize] = amount;
             slot_cnt += 1;
             if slot_cnt >= n_blocks {
                 slot_cnt = 0;
             }
 
-            // PeriodReward: BalanceOf<T>
+            // PeriodRewardStorage: BalanceOf<T>
             // Sum of last n_blocks block-rewards
-            let mut period_reward = <BalanceOf<T>>::zero();
-            // Workarround, skip some block rewards to gain always positive balance
-            balances.iter().skip(5).for_each(|&b| period_reward += b);
+            let mut period_reward = BalanceOf::<T>::zero();
+            balances.iter().for_each(|&b| period_reward += b);
 
-            <RewardsRecord<T>>::set((slot_cnt, balances));
-            <PeriodReward<T>>::set(period_reward);
+            <RewardsRecordStorage<T>>::set((slot_cnt, balances));
+            <PeriodRewardStorage<T>>::set(period_reward);
+        }
+
+        fn resize_track_storage(new_size: u8) {
+            let (_slot_cnt, mut balances) = <RewardsRecordStorage<T>>::get();
+
+            let cur_size = balances.len();
+            if cur_size < new_size as usize {
+                balances.resize(new_size as usize, BalanceOf::<T>::zero());
+                let slot_cnt = cur_size as u8;
+                assert!(balances.len() == new_size as usize);
+                <RewardsRecordStorage<T>>::put((slot_cnt, balances));
+            } else if cur_size > new_size as usize {
+                let slot_cnt = 0u8;
+                let balances = balances.split_off((new_size - 1) as usize);
+                assert!(balances.len() == new_size as usize);
+                <RewardsRecordStorage<T>>::put((slot_cnt, balances));
+            }
         }
     }
 
@@ -475,7 +563,7 @@ pub mod pallet {
                 return Err(MorError::MorAuthorizationFailed);
             }
 
-            Ok(<PeriodReward<T>>::get())
+            Ok(<PeriodRewardStorage<T>>::get())
         }
     }
 }

@@ -1,6 +1,6 @@
 [package]
 name = "peaq-pallet-mor"
-version = "0.0.1"
+version = "0.0.2"
 edition = "2021"
 description = 'A pallet that handles peaq`s block reward distribution for machine owners.'
 authors = ['peaq <https://github.com/peaqnetwork>']
@@ -61,12 +61,12 @@ branch = 'peaq-polkadot-v0.9.29'
 [dependencies.sp-std]
 default-features = false
 git = 'https://github.com/peaqnetwork/substrate'
-branch = 'peaq-polkadot-v0.9.29'  # or the latest monthly
+branch = 'peaq-polkadot-v0.9.29'
 
 [dependencies.pallet-timestamp]
 default-features = false
 git = 'https://github.com/peaqnetwork/substrate'
-branch = 'peaq-polkadot-v0.9.29'  # or the latest monthly
+branch = 'peaq-polkadot-v0.9.29'
 
 [dependencies.serde]
 version = '1.0'
