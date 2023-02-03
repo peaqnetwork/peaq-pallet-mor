@@ -181,6 +181,20 @@ pub mod pallet {
         types::*,
     };
 
+
+    macro_rules! dpatch_dposit_par {
+        ($res:expr, $event:expr) => {
+            match $res {
+                Ok(_d) => {
+                    Self::deposit_event($event);
+                    Ok(())
+                }
+                Err(e) => Err(e),
+            }
+        };
+    }
+
+
     #[pallet::pallet]
     #[pallet::generate_store(pub(super) trait Store)]
     #[pallet::without_storage_info]
@@ -246,9 +260,7 @@ pub mod pallet {
     #[pallet::generate_deposit(pub(super) fn deposit_event)]
     pub enum Event<T: Config> {
         /// Machine has been rewarded by minting tokens.
-        RewardsMinted(T::AccountId, BalanceOf<T>),
-        /// Machine owner has been rewarded by tokens from the pot.
-        RewardsFromPot(T::AccountId, BalanceOf<T>),
+        MintedTokens(BalanceOf<T>),
         /// The pallet's configuration has been updated.
         MorConfigChanged(MorConfig<BalanceOf<T>>),
         /// Fetches the pallet's configuration.
@@ -257,6 +269,12 @@ pub mod pallet {
         FetchedPotBalance(BalanceOf<T>),
         /// Temporary for development. Fetched current amount of rewarding.
         FetchedCurrentRewarding(BalanceOf<T>),
+        /// Sent when machine usage has been payed.
+        MachineUsagePayed(T::AccountId, BalanceOf<T>),
+        /// Sent when the online rewards have been transfered.
+        OnlineRewardsPayed(T::AccountId, BalanceOf<T>),
+        /// Sent when a registration rewards have been transfered.
+        RegistrationRewardPayed(T::AccountId, BalanceOf<T>),
     }
 
     /// For description of error types, please have a look into module error for
@@ -344,7 +362,10 @@ pub mod pallet {
 
             let reward = Self::register_machine(&sender, &machine).map_err(Error::<T>::from_mor)?;
 
-            Self::mint_to_account(&sender, reward)
+            dpatch_dposit_par!(
+                Self::mint_to_account(&sender, reward.clone()),
+                Event::<T>::RegistrationRewardPayed(sender, reward)
+            )
         }
 
         /// In this early version one can collect rewards for a machine, which has been online
@@ -357,7 +378,10 @@ pub mod pallet {
 
             let reward = Self::reward_machine(&sender, &machine).map_err(Error::<T>::from_mor)?;
 
-            Self::transfer_from_pot(&sender, reward)
+            dpatch_dposit_par!(
+                Self::transfer_from_pot(&sender, reward.clone()),
+                Event::<T>::OnlineRewardsPayed(sender, reward)
+            )
         }
 
         /// When using a machine, this extrinsic is about to pay the fee for the machine usage.
@@ -373,10 +397,14 @@ pub mod pallet {
 
             let config = <MorConfigStorage<T>>::get();
 
+            // MachineUsagePayed
             if config.machine_usage_fee_min > amount || amount > config.machine_usage_fee_max {
                 Err(Error::<T>::from_mor(MachinePaymentOutOfRange))
             } else {
-                Self::mint_to_account(&machine, amount)
+                dpatch_dposit_par!(
+                    Self::mint_to_account(&machine, amount.clone()),
+                    Event::<T>::MachineUsagePayed(machine, amount)
+                )
             }
         }
 
@@ -442,7 +470,7 @@ pub mod pallet {
 
             match T::Currency::deposit_into_existing(account, amount) {
                 Ok(_d) => {
-                    Self::deposit_event(Event::<T>::RewardsMinted(account.clone(), amount));
+                    Self::deposit_event(Event::<T>::MintedTokens(amount));
                     Ok(())
                 },
                 Err(err) => Err(err)
@@ -454,7 +482,6 @@ pub mod pallet {
 
             if T::Currency::free_balance(&pot) >= amount {
                 T::Currency::transfer(&pot, account, amount, ExistenceRequirement::KeepAlive)?;
-                Self::deposit_event(Event::<T>::RewardsFromPot(account.clone(), amount));
                 Ok(())
             } else {
                 Err(Error::<T>::from_mor(InsufficientTokensInPot))
