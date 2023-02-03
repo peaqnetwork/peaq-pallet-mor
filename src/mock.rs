@@ -1,6 +1,6 @@
 //! Runtime mockup with this pallet for testing purposes.
 use crate as peaq_pallet_mor;
-use crate::types::BalanceOf;
+use crate::types::{BalanceOf, MorConfig};
 
 use frame_support::{parameter_types, PalletId};
 use pallet_balances;
@@ -141,7 +141,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
     .unwrap();
 
     peaq_pallet_mor::GenesisConfig::<Test> {
-        mor_config: peaq_pallet_mor::types::MorConfig { 
+        mor_config: MorConfig { 
             registration_reward: BalanceOf::<Test>::from(100_000_000_000_000_000u128),
             machine_usage_fee_min: BalanceOf::<Test>::from(100_000_000_000_000_000u128),
             machine_usage_fee_max: BalanceOf::<Test>::from(3_000_000_000_000_000_000u128),
