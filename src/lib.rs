@@ -182,16 +182,23 @@ pub mod pallet {
     };
 
 
+    macro_rules! dposit_par {
+        ($event:expr) => {
+            Self::deposit_event($event);
+            Ok(())
+        }
+    }
+
     macro_rules! dpatch_dposit_par {
         ($res:expr, $event:expr) => {
             match $res {
                 Ok(_d) => {
                     Self::deposit_event($event);
                     Ok(())
-                }
+                },
                 Err(e) => Err(e),
             }
-        };
+        }
     }
 
 
@@ -419,8 +426,8 @@ pub mod pallet {
             if config.is_consistent() {
                 Self::resize_track_storage(config.track_n_block_rewards);
                 <MorConfigStorage<T>>::put(config.clone());
-                Self::deposit_event(Event::<T>::MorConfigChanged(config));
-                Ok(())
+                
+                dposit_par!(Event::<T>::MorConfigChanged(config))
             } else {
                 Err(Error::<T>::from_mor(MorConfigIsNotConsistent))
             }
@@ -433,8 +440,7 @@ pub mod pallet {
 
             let config = <MorConfigStorage<T>>::get();
 
-            Self::deposit_event(Event::<T>::FetchedMorConfig(config));
-            Ok(())
+            dposit_par!(Event::<T>::FetchedMorConfig(config))
         }
 
         /// This is temporary for debug and development
@@ -445,8 +451,7 @@ pub mod pallet {
             let pot: T::AccountId = T::PotId::get().into_account_truncating();
             let amount = T::Currency::free_balance(&pot);
 
-            Self::deposit_event(Event::<T>::FetchedPotBalance(amount));
-            Ok(())
+            dposit_par!(Event::<T>::FetchedPotBalance(amount))
         }
 
         /// This is temporary for debug and development
@@ -456,8 +461,7 @@ pub mod pallet {
 
             let amount = <PeriodRewardStorage<T>>::get();
 
-            Self::deposit_event(Event::<T>::FetchedCurrentRewarding(amount));
-            Ok(())
+            dposit_par!(Event::<T>::FetchedCurrentRewarding(amount))
         }
     }
 
