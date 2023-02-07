@@ -7,7 +7,6 @@ use scale_info::TypeInfo;
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
 use sp_core::RuntimeDebug;
-// use sp_runtime::traits::{Zero, One};
 
 
 /// Short form type definition to simplify method definition.

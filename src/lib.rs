@@ -356,7 +356,7 @@ pub mod pallet {
         /// Registers a new machine on the network by given account-ID and machine-ID. This
         /// method will raise errors if the machine is already registered, or if the
         /// authorization in Peaq-DID fails.
-        #[pallet::weight(<WeightOf<T>>::some_extrinsic())]
+        #[pallet::weight(<WeightOf<T>>::get_registration_reward())]
         pub fn get_registration_reward(origin: OriginFor<T>, machine: T::AccountId) -> DispatchResult {
             let sender = ensure_signed(origin)?;
 
@@ -372,7 +372,7 @@ pub mod pallet {
         /// on the network for a defined time period, see MorConfig. This method will raise
         /// errors if the authorization in Peaq-DID fails or if the machine is not registered
         /// in Peaq-MOR.
-        #[pallet::weight(<WeightOf<T>>::some_extrinsic())]
+        #[pallet::weight(<WeightOf<T>>::get_online_rewards())]
         pub fn get_online_rewards(origin: OriginFor<T>, machine: T::AccountId) -> DispatchResult {
             let sender = ensure_signed(origin)?;
 
@@ -387,7 +387,7 @@ pub mod pallet {
         /// When using a machine, this extrinsic is about to pay the fee for the machine usage.
         /// Assumption is, that the origin is the user, which used the machine and he will pay
         /// the fee for machine usage.
-        #[pallet::weight(<WeightOf<T>>::some_extrinsic())]
+        #[pallet::weight(WeightOf::<T>::pay_machine_usage())]
         pub fn pay_machine_usage(
             origin: OriginFor<T>,
             machine: T::AccountId,
@@ -395,7 +395,7 @@ pub mod pallet {
         ) -> DispatchResult {
             ensure_signed(origin)?;
 
-            let config = <MorConfigStorage<T>>::get();
+            let config = MorConfigStorage::<T>::get();
 
             // MachineUsagePayed
             if config.machine_usage_fee_min > amount || amount > config.machine_usage_fee_max {
@@ -409,7 +409,7 @@ pub mod pallet {
         }
 
         /// Updates the pallet's configuration parameters by passing a MorConfig-struct.
-        #[pallet::weight(<WeightOf<T>>::some_extrinsic())]
+        #[pallet::weight(WeightOf::<T>::set_configuration())]
         pub fn set_configuration(
             origin: OriginFor<T>,
             config: MorConfig<BalanceOf<T>>,
@@ -418,7 +418,7 @@ pub mod pallet {
 
             if config.is_consistent() {
                 Self::resize_track_storage(config.track_n_block_rewards);
-                <MorConfigStorage<T>>::put(config.clone());
+                MorConfigStorage::<T>::put(config.clone());
                 
                 Self::deposit_event(Event::<T>::MorConfigChanged(config));
                 Ok(())
@@ -427,19 +427,8 @@ pub mod pallet {
             }
         }
 
-        /// Updates the pallet's configuration parameters by passing a MorConfig-struct.
-        #[pallet::weight(<WeightOf<T>>::some_extrinsic())]
-        pub fn fetch_configuration(origin: OriginFor<T>) -> DispatchResult {
-            ensure_root(origin)?;
-
-            let config = <MorConfigStorage<T>>::get();
-
-            Self::deposit_event(Event::<T>::FetchedMorConfig(config));
-            Ok(())
-        }
-
         /// This is temporary for debug and development
-        #[pallet::weight(<WeightOf<T>>::some_extrinsic())]
+        #[pallet::weight(WeightOf::<T>::fetch_pot_balance())]
         pub fn fetch_pot_balance(origin: OriginFor<T>) -> DispatchResult {
             ensure_root(origin)?;
 
@@ -447,17 +436,6 @@ pub mod pallet {
             let amount = T::Currency::free_balance(&pot);
 
             Self::deposit_event(Event::<T>::FetchedPotBalance(amount));
-            Ok(())
-        }
-
-        /// This is temporary for debug and development
-        #[pallet::weight(<WeightOf<T>>::some_extrinsic())]
-        pub fn fetch_period_rewarding(origin: OriginFor<T>) -> DispatchResult {
-            ensure_root(origin)?;
-
-            let amount = <PeriodRewardStorage<T>>::get();
-
-            Self::deposit_event(Event::<T>::FetchedCurrentRewarding(amount));
             Ok(())
         }
     }
@@ -490,12 +468,12 @@ pub mod pallet {
         }
 
         fn log_block_rewards(amount: BalanceOf<T>) {
-            let mor_config = <MorConfigStorage<T>>::get();
+            let mor_config = MorConfigStorage::<T>::get();
             let n_blocks = mor_config.track_n_block_rewards;
 
             // RewardsRecordStorage: (u8, Vec<BalanceOf<T>>)
             // (Next array-slot to write in, vector of imbalances)
-            let (mut slot_cnt, mut balances) = <RewardsRecordStorage<T>>::get();
+            let (mut slot_cnt, mut balances) = RewardsRecordStorage::<T>::get();
             balances[slot_cnt as usize] = amount;
             slot_cnt += 1;
             if slot_cnt >= n_blocks {
@@ -507,24 +485,24 @@ pub mod pallet {
             let mut period_reward = BalanceOf::<T>::zero();
             balances.iter().for_each(|&b| period_reward += b);
 
-            <RewardsRecordStorage<T>>::set((slot_cnt, balances));
-            <PeriodRewardStorage<T>>::set(period_reward);
+            RewardsRecordStorage::<T>::set((slot_cnt, balances));
+            PeriodRewardStorage::<T>::set(period_reward);
         }
 
         fn resize_track_storage(new_size: u8) {
-            let (_slot_cnt, mut balances) = <RewardsRecordStorage<T>>::get();
+            let (_slot_cnt, mut balances) = RewardsRecordStorage::<T>::get();
 
             let cur_size = balances.len();
             if cur_size < new_size as usize {
                 balances.resize(new_size as usize, BalanceOf::<T>::zero());
                 let slot_cnt = cur_size as u8;
                 assert!(balances.len() == new_size as usize);
-                <RewardsRecordStorage<T>>::put((slot_cnt, balances));
+                RewardsRecordStorage::<T>::put((slot_cnt, balances));
             } else if cur_size > new_size as usize {
                 let slot_cnt = 0u8;
                 let balances = balances.split_off((new_size - 1) as usize);
                 assert!(balances.len() == new_size as usize);
-                <RewardsRecordStorage<T>>::put((slot_cnt, balances));
+                RewardsRecordStorage::<T>::put((slot_cnt, balances));
             }
         }
     }
@@ -539,12 +517,12 @@ pub mod pallet {
             DidPallet::<T>::is_owner(owner, machine).map_err(MorError::from)?;
 
             let machine_hash = (machine).using_encoded(blake2_256);
-            if <MachineRegister<T>>::contains_key(machine_hash) {
+            if MachineRegister::<T>::contains_key(machine_hash) {
                 Err(MorError::MachineAlreadyRegistered)
             } else {
                 let owner_hash = (owner).using_encoded(blake2_256);
-                let config = <MorConfigStorage<T>>::get();
-                <MachineRegister<T>>::insert(machine_hash, owner_hash);
+                let config = MorConfigStorage::<T>::get();
+                MachineRegister::<T>::insert(machine_hash, owner_hash);
                 // 1 AGNG = 1_000_000_000_000_000_000
                 Ok(config.registration_reward)
             }
@@ -555,15 +533,15 @@ pub mod pallet {
             DidPallet::<T>::is_owner(owner, machine).map_err(MorError::from)?;
             // Is machine registered in Peaq-MOR?
             let machine_hash = (machine).using_encoded(blake2_256);
-            if !<MachineRegister<T>>::contains_key(machine_hash) {
+            if !MachineRegister::<T>::contains_key(machine_hash) {
                 return Err(MorError::MachineNotRegistered);
             }
-            let owner_hash = <MachineRegister<T>>::get(machine_hash);
+            let owner_hash = MachineRegister::<T>::get(machine_hash);
             if owner_hash != (owner).using_encoded(blake2_256) {
                 return Err(MorError::MorAuthorizationFailed);
             }
 
-            Ok(<PeriodRewardStorage<T>>::get())
+            Ok(PeriodRewardStorage::<T>::get())
         }
     }
 }
