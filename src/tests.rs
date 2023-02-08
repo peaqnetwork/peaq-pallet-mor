@@ -10,13 +10,6 @@ use frame_support::{assert_noop, assert_ok};
 use sp_core::sr25519::Public;
 use sp_runtime::traits::BadOrigin;
 
-// Defined in moch.rs:
-// const O_ACCT: &'static str
-// const U_ACCT: &'static str
-// const M_ACCT: &'static str
-
-const M_ATTR: &[u8] = b"Attribute";
-const M_VAL: &[u8] = b"Value";
 
 fn register_machine_did(owner: Public, machine: Public) {
     // Register at least one attribute on Peaq-DID.

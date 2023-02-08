@@ -112,8 +112,10 @@ impl peaq_pallet_mor::Config for Test {
 
 // Some constants for the test
 pub(crate) const O_ACCT: &'static str = "Alice"; // Owner
-pub(crate) const U_ACCT: &'static str = "SomeUser"; // User
-pub(crate) const M_ACCT: &'static str = "RPi001"; // Machine
+pub(crate) const U_ACCT: &'static str = "Bob"; // User
+pub(crate) const M_ACCT: &'static str = "Charlie"; // Machine
+pub(crate) const M_ATTR: &[u8] = b"Attribute";
+pub(crate) const M_VAL: &[u8] = b"Value";
 
 // Build genesis storage according to the mock runtime.
 pub fn new_test_ext() -> sp_io::TestExternalities {
