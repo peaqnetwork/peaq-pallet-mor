@@ -2,11 +2,11 @@
 
 use super::*;
 
-#[allow(unused)]
 use crate::{
     Pallet as PeaqMor,
     types::{BalanceOf, MorConfig},
 };
+use peaq_pallet_did::Pallet as PeaqDid;
 use frame_benchmarking::{
     account, benchmarks, impl_benchmark_test_suite
 };
@@ -18,9 +18,11 @@ fn assert_last_event<T: Config>(generic_event: <T as Config>::Event) {
     System::<T>::assert_last_event(generic_event.into());
 }
 
-const CALLER_ACC_STR: &str = "Alice";
-const MACHINE_ACC_STR: &str = "Charlie";
+const O_ACC_STR: &str = "Alice";
+const M_ACC_STR: &str = "Charlie";
 const REG_FEE: u128 = 100_000_000_000_000_000u128;
+const M_ATTR: &[u8] = b"Attribute";
+const M_VAL: &[u8] = b"Value";
 
 benchmarks! {
     where_clause { where
@@ -28,29 +30,47 @@ benchmarks! {
     }
 
     get_registration_reward {
-        let caller: T::AccountId = account(CALLER_ACC_STR, 0, 0);
-        let machine: T::AccountId = account(MACHINE_ACC_STR, 0, 0);
-    }: _(RawOrigin::Signed(caller.clone()), machine)
+        let owner: T::AccountId = account(O_ACC_STR, 0, 0);
+        let machine: T::AccountId = account(M_ACC_STR, 0, 0);
+        PeaqDid::<T>::add_attribute(
+            RawOrigin::Signed(owner.clone()).into(),
+            machine.clone(),
+            M_ATTR.to_vec(),
+            M_VAL.to_vec(),
+            None
+        ).expect("check unit-tests");
+    }: _(RawOrigin::Signed(owner.clone()), machine.clone())
     verify {
         assert_last_event::<T>(Event::<T>::RegistrationRewardPayed(
-            caller.clone(), BalanceOf::<T>::from(REG_FEE)
+            owner.clone(), BalanceOf::<T>::from(REG_FEE)
         ).into());
     }
 
     get_online_rewards {
-        let caller: T::AccountId = account(CALLER_ACC_STR, 0, 0);
-        let machine: T::AccountId = account(MACHINE_ACC_STR, 0, 0);
-    }: _(RawOrigin::Signed(caller.clone()), machine)
+        let owner: T::AccountId = account(O_ACC_STR, 0, 0);
+        let machine: T::AccountId = account(M_ACC_STR, 0, 0);
+        PeaqDid::<T>::add_attribute(
+            RawOrigin::Signed(owner.clone()).into(),
+            machine.clone(),
+            M_ATTR.to_vec(),
+            M_VAL.to_vec(),
+            None
+        ).expect("check unit-tests");
+        PeaqMor::<T>::get_registration_reward(
+            RawOrigin::Signed(owner.clone()).into(),
+            machine.clone()
+        ).expect("check unit-tests");
+    }: _(RawOrigin::Signed(owner.clone()), machine.clone())
     verify {
         assert_last_event::<T>(Event::<T>::OnlineRewardsPayed(
-            caller.clone(), BalanceOf::<T>::zero()
+            owner.clone(), BalanceOf::<T>::zero()
         ).into());
     }
 
     pay_machine_usage {
-        let caller: T::AccountId = account(CALLER_ACC_STR, 0, 0);
-        let machine: T::AccountId = account(MACHINE_ACC_STR, 0, 0);
-    }: _(RawOrigin::Signed(caller.clone()), machine.clone(), BalanceOf::<T>::from(REG_FEE))
+        let owner: T::AccountId = account(O_ACC_STR, 0, 0);
+        let machine: T::AccountId = account(M_ACC_STR, 0, 0);
+    }: _(RawOrigin::Signed(owner.clone()), machine.clone(), BalanceOf::<T>::from(REG_FEE))
     verify {
         assert_last_event::<T>(Event::<T>::MachineUsagePayed(
             machine, BalanceOf::<T>::from(REG_FEE)
@@ -58,9 +78,9 @@ benchmarks! {
     }
 
     set_configuration {
-        let caller: T::AccountId = account(CALLER_ACC_STR, 0, 0);
+        let owner: T::AccountId = account(O_ACC_STR, 0, 0);
         let config: MorConfig<BalanceOf<T>> = MorConfig::<BalanceOf<T>>::default();
-    }: _(RawOrigin::Signed(caller.clone()), config.clone())
+    }: _(RawOrigin::Signed(owner.clone()), config.clone())
     verify {
         assert_last_event::<T>(Event::<T>::MorConfigChanged(
             config
@@ -68,8 +88,8 @@ benchmarks! {
     }
 
     fetch_pot_balance {
-        let caller: T::AccountId = account(CALLER_ACC_STR, 0, 0);
-    }: _(RawOrigin::Signed(caller.clone()))
+        let owner: T::AccountId = account(O_ACC_STR, 0, 0);
+    }: _(RawOrigin::Signed(owner.clone()))
     verify {
         assert_last_event::<T>(Event::<T>::FetchedPotBalance(
             BalanceOf::<T>::zero()
@@ -77,4 +97,4 @@ benchmarks! {
     }
 }
 
-impl_benchmark_test_suite!(Pallet, crate::mock::new_test_ext(), crate::mock::Test);
+impl_benchmark_test_suite!(PeaqMor, crate::mock::new_test_ext(), crate::mock::Test);
