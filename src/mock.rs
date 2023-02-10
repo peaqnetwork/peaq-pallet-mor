@@ -3,10 +3,7 @@ use crate as peaq_pallet_mor;
 use crate::types::{BalanceOf, MorConfig};
 
 use frame_benchmarking::account;
-use frame_support::{
-    parameter_types, PalletId,
-    traits::GenesisBuild,
-};
+use frame_support::{parameter_types, PalletId};
 use pallet_balances;
 use pallet_timestamp;
 use sp_core::{sr25519, H256};
@@ -14,6 +11,7 @@ use sp_runtime::{
     testing::Header,
     traits::{AccountIdConversion, BlakeTwo256, IdentityLookup},
 };
+use sp_std::vec;
 
 // system
 type Block = frame_system::mocking::MockBlock<Test>;
@@ -126,7 +124,7 @@ pub const REG_FEE: u128 = 100_000_000_000_000_000u128;
 
 // Build genesis storage according to the mock runtime.
 #[allow(dead_code)]
-pub(crate) fn new_test_ext() -> sp_io::TestExternalities {
+pub fn new_test_ext() -> sp_io::TestExternalities {
     //  creates a default balance for the owner account
     let owner = account_key(O_ACCT);
     let user = account_key(U_ACCT);
@@ -169,6 +167,6 @@ pub(crate) fn new_test_ext() -> sp_io::TestExternalities {
 
 
 #[allow(dead_code)]
-pub(crate) fn account_key(s: &'static str) -> <Test as frame_system::Config>::AccountId {
+pub fn account_key(s: &'static str) -> <Test as frame_system::Config>::AccountId {
     account(s, 0, 0)
 }

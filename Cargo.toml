@@ -38,13 +38,11 @@ branch = 'peaq-polkadot-v0.9.29'
 default-features = false
 git = 'https://github.com/peaqnetwork/substrate'
 branch = 'peaq-polkadot-v0.9.29'
-optional = true
 
 [dependencies.pallet-sudo]
 default-features = false
 git = 'https://github.com/peaqnetwork/substrate'
 branch = 'peaq-polkadot-v0.9.29'
-optional = true
 
 [dependencies.peaq-pallet-did]
 default-features = false
