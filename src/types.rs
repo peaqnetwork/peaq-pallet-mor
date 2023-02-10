@@ -43,9 +43,10 @@ impl<Balance: BalanceT> MorConfig<Balance> {
     pub fn is_consistent(&self) -> bool {
         // this parameter affects resulting vector size, therefor not allowed to be zero!
         let blocks = self.track_n_block_rewards > 0;
-        let range = self.machine_usage_fee_max > self.machine_usage_fee_min;
+        let range_usage = self.machine_usage_fee_max > self.machine_usage_fee_min;
+        let range_min = self.registration_reward > Balance::from(500u32) && self.machine_usage_fee_min > Balance::from(500u32);
 
-        blocks && range
+        blocks && range_usage && range_min
     }
 }
 
