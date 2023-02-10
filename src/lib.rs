@@ -209,6 +209,10 @@ pub mod pallet {
         /// Because this pallet emits events, it depends on the runtime's definition of an event.
         type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 
+        /// The minimum amount required to keep an account open.
+		#[pallet::constant]
+		type ExistentialDeposit: Get<BalanceOf<Self>>;
+
         /// The currency type.
         type Currency: Currency<Self::AccountId>
             + ReservableCurrency<Self::AccountId>
@@ -325,7 +329,7 @@ pub mod pallet {
     #[pallet::genesis_build]
     impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
         fn build(&self) {
-            assert!(self.mor_config.is_consistent());
+            assert!(self.mor_config.is_consistent(T::ExistentialDeposit::get()));
 
             let reward_record = (0u8, vec![BalanceOf::<T>::zero(); self.mor_config.track_n_block_rewards as usize]);
 
@@ -416,7 +420,7 @@ pub mod pallet {
         ) -> DispatchResult {
             ensure_root(origin)?;
 
-            if config.is_consistent() {
+            if config.is_consistent(T::ExistentialDeposit::get()) {
                 Self::resize_track_storage(config.track_n_block_rewards);
                 <MorConfigStorage<T>>::put(config.clone());
                 

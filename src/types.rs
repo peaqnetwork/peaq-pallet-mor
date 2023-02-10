@@ -40,12 +40,12 @@ pub struct MorConfig<Balance> {
 
 impl<Balance: BalanceT> MorConfig<Balance> {
     /// Method checks whether configuration is cons
-    pub fn is_consistent(&self) -> bool {
+    pub fn is_consistent(&self, existential_deposit: Balance) -> bool {
         // this parameter affects resulting vector size, therefor not allowed to be zero!
         let blocks = self.track_n_block_rewards > 0;
         let range_usage = self.machine_usage_fee_max > self.machine_usage_fee_min;
-        let range_min = self.registration_reward > Balance::from(500u32) 
-            && self.machine_usage_fee_min > Balance::from(500u32);
+        let range_min = self.registration_reward > existential_deposit 
+            && self.machine_usage_fee_min > existential_deposit;
 
         blocks && range_usage && range_min
     }
