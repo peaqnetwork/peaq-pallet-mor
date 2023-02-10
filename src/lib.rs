@@ -469,13 +469,9 @@ pub mod pallet {
             
             let amount = imbalance.peek();
 
-            match T::Currency::deposit_into_existing(account, amount) {
-                Ok(_d) => {
-                    Self::deposit_event(Event::<T>::MintedTokens(amount));
-                    Ok(())
-                },
-                Err(err) => Err(err)
-            }
+            let imbalance = T::Currency::deposit_creating(account, amount);
+            Self::deposit_event(Event::<T>::MintedTokens(imbalance.peek()));
+            Ok(())
         }
 
         fn transfer_from_pot(account: &T::AccountId, amount: BalanceOf<T>) -> DispatchResult {
