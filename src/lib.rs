@@ -132,7 +132,7 @@
 
 pub use pallet::*;
 
-#[cfg(test)]
+#[cfg(any(test, feature = "runtime-benchmarks"))]
 mod mock;
 
 #[cfg(test)]
