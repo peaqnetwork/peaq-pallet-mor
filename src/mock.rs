@@ -107,6 +107,7 @@ impl peaq_pallet_did::Config for Test {
 
 impl peaq_pallet_mor::Config for Test {
     type Event = Event;
+    type ExistentialDeposit = ExistentialDeposit;
     type Currency = Balances;
     type PotId = PotId;
     type WeightInfo = peaq_pallet_mor::weights::SubstrateWeight<Test>;

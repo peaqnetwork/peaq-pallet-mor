@@ -128,6 +128,7 @@ fn pay_machine_usage_test() {
 #[test]
 fn set_configuration_test() {
     new_test_ext().execute_with(|| {
+        let b_too_low = BalanceOf::<Test>::from(250u128);
         let b_low = BalanceOf::<Test>::from(100_000_000_000_000u128);
         let b_med = BalanceOf::<Test>::from(500_000_000_000_000u128);
         let b_max = BalanceOf::<Test>::from(2_500_000_000_000_000u128);
@@ -143,6 +144,19 @@ fn set_configuration_test() {
         // Try to set invalid configuration (number of blocks).
         // Expect error MorConfigIsNotConsistent.
         let config = def_config(b_low, b_med, b_med, 0);
+        assert_noop!(
+            PeaqMor::set_configuration(Origin::root(), config),
+            Error::<Test>::MorConfigIsNotConsistent
+        );
+
+        // Try to set invalid configuration (minimum of fees is way too low).
+        // Expect error MorConfigIsNotConsistent.
+        let config = def_config(b_too_low, b_med, b_med, 0);
+        assert_noop!(
+            PeaqMor::set_configuration(Origin::root(), config),
+            Error::<Test>::MorConfigIsNotConsistent
+        );
+        let config = def_config(b_low, b_too_low, b_med, 0);
         assert_noop!(
             PeaqMor::set_configuration(Origin::root(), config),
             Error::<Test>::MorConfigIsNotConsistent
