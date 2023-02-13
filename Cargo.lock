@@ -1593,7 +1593,7 @@ dependencies = [
 
 [[package]]
 name = "peaq-pallet-mor"
-version = "0.0.2"
+version = "0.0.3"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
