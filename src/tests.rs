@@ -166,6 +166,16 @@ fn set_configuration_test() {
         // Expect no error.
         let config = def_config(b_low, b_med, b_max, 50);
         assert_ok!(PeaqMor::set_configuration(Origin::root(), config));
+
+        // Set another valid configuration with more track_n_block_rewards.
+        // Expect no error.
+        let config = def_config(b_low, b_med, b_max, 100);
+        assert_ok!(PeaqMor::set_configuration(Origin::root(), config));
+
+        // Set another valid configuration with less track_n_block_rewards.
+        // Expect no error.
+        let config = def_config(b_low, b_med, b_max, 25);
+        assert_ok!(PeaqMor::set_configuration(Origin::root(), config));
     });
 }
 

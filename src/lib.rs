@@ -132,7 +132,7 @@
 
 pub use pallet::*;
 
-#[cfg(any(test, feature = "runtime-benchmarks"))]
+#[cfg(test)]
 mod mock;
 
 #[cfg(test)]
@@ -487,7 +487,7 @@ pub mod pallet {
                 RewardsRecordStorage::<T>::put((slot_cnt, balances));
             } else if cur_size > new_size as usize {
                 let slot_cnt = 0u8;
-                let balances = balances.split_off((new_size - 1) as usize);
+                let balances = balances.split_off(cur_size - (new_size as usize));
                 assert!(balances.len() == new_size as usize);
                 RewardsRecordStorage::<T>::put((slot_cnt, balances));
             }

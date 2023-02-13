@@ -3,9 +3,10 @@ use crate as peaq_pallet_mor;
 use crate::types::{BalanceOf, MorConfig};
 
 use frame_benchmarking::account;
-use frame_support::{parameter_types, PalletId};
 #[cfg(feature = "std")]
 use frame_support::traits::GenesisBuild;
+use frame_support::{parameter_types, construct_runtime, PalletId};
+use frame_system;
 use pallet_balances;
 use pallet_timestamp;
 use sp_core::{sr25519, H256};
@@ -14,7 +15,7 @@ use sp_runtime::{
     traits::{AccountIdConversion, BlakeTwo256, IdentityLookup},
 };
 use sp_io;
-use sp_std::vec;
+use sp_std::{vec, vec::Vec, boxed::Box};
 
 // system
 pub type Block = frame_system::mocking::MockBlock<Test>;
@@ -23,7 +24,7 @@ pub type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test
 pub type BalancesType = u128;
 
 // Configure a mock runtime to test the pallet.
-frame_support::construct_runtime!(
+construct_runtime!(
     pub enum Test where
         Block = Block,
         NodeBlock = Block,
@@ -118,12 +119,12 @@ impl peaq_pallet_mor::Config for Test {
 
 
 // Some constants for the test
-pub const O_ACCT: &'static str = "Alice"; // Owner
-pub const U_ACCT: &'static str = "Bob"; // User
-pub const M_ACCT: &'static str = "RPi001"; // Machine
-pub const M_ATTR: &[u8] = b"Type";
-pub const M_VAL: &[u8] = b"RPiMachine";
-pub const REG_FEE: u128 = 100_000_000_000_000_000u128;
+pub(crate) const O_ACCT: &'static str = "Alice"; // Owner
+pub(crate) const U_ACCT: &'static str = "Bob"; // User
+pub(crate) const M_ACCT: &'static str = "RPi001"; // Machine
+pub(crate) const M_ATTR: &[u8] = b"Type";
+pub(crate) const M_VAL: &[u8] = b"RPiMachine";
+pub(crate) const REG_FEE: u128 = 100_000_000_000_000_000u128;
 
 
 // Build genesis storage according to the mock runtime.
