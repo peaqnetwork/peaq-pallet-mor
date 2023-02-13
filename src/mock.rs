@@ -4,6 +4,8 @@ use crate::types::{BalanceOf, MorConfig};
 
 use frame_benchmarking::account;
 use frame_support::{parameter_types, PalletId};
+#[cfg(feature = "std")]
+use frame_support::traits::GenesisBuild;
 use pallet_balances;
 use pallet_timestamp;
 use sp_core::{sr25519, H256};
@@ -11,11 +13,12 @@ use sp_runtime::{
     testing::Header,
     traits::{AccountIdConversion, BlakeTwo256, IdentityLookup},
 };
+use sp_io;
 use sp_std::vec;
 
 // system
-type Block = frame_system::mocking::MockBlock<Test>;
-type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
+pub type Block = frame_system::mocking::MockBlock<Test>;
+pub type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 // pallet-balances
 pub type BalancesType = u128;
 

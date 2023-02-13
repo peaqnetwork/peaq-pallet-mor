@@ -132,8 +132,7 @@
 
 pub use pallet::*;
 
-// #[cfg(any(test, feature = "runtime-benchmarks"))]
-#[cfg(test)]
+#[cfg(any(test, feature = "runtime-benchmarks"))]
 mod mock;
 
 #[cfg(test)]
@@ -337,19 +336,6 @@ pub mod pallet {
             MorConfigStorage::<T>::put(self.mor_config.clone());
             RewardsRecordStorage::<T>::put(reward_record);
             PeriodRewardStorage::<T>::put(BalanceOf::<T>::zero());
-        }
-    }
-
-    #[cfg(feature = "std")]
-    impl<T: Config> GenesisConfig<T> {
-        /// Direct implementation of `GenesisBuild::build_storage`.
-        pub fn build_storage(&self) -> Result<sp_runtime::Storage, String> {
-            <Self as GenesisBuild<T>>::build_storage(self)
-        }
-
-        /// Direct implementation of `GenesisBuild::assimilate_storage`.
-        pub fn assimilate_storage(&self, storage: &mut sp_runtime::Storage) -> Result<(), String> {
-            <Self as GenesisBuild<T>>::assimilate_storage(self, storage)
         }
     }
 
