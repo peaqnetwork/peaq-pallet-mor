@@ -119,12 +119,12 @@ impl peaq_pallet_mor::Config for Test {
 
 
 // Some constants for the test
-pub(crate) const O_ACCT: &'static str = "Alice"; // Owner
-pub(crate) const U_ACCT: &'static str = "Bob"; // User
-pub(crate) const M_ACCT: &'static str = "RPi001"; // Machine
-pub(crate) const M_ATTR: &[u8] = b"Type";
-pub(crate) const M_VAL: &[u8] = b"RPiMachine";
-pub(crate) const REG_FEE: u128 = 100_000_000_000_000_000u128;
+pub const O_ACCT: &'static str = "Alice"; // Owner
+pub const U_ACCT: &'static str = "Bob"; // User
+pub const M_ACCT: &'static str = "RPi001"; // Machine
+pub const M_ATTR: &[u8] = b"Type";
+pub const M_VAL: &[u8] = b"RPiMachine";
+pub const REG_FEE: u128 = 100_000_000_000_000_000u128;
 
 
 // Build genesis storage according to the mock runtime.

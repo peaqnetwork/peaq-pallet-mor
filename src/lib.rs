@@ -347,7 +347,7 @@ pub mod pallet {
         /// Registers a new machine on the network by given account-ID and machine-ID. This
         /// method will raise errors if the machine is already registered, or if the
         /// authorization in Peaq-DID fails.
-        #[pallet::weight(<WeightOf<T>>::get_registration_reward())]
+        #[pallet::weight(WeightOf::<T>::get_registration_reward())]
         pub fn get_registration_reward(origin: OriginFor<T>, machine: T::AccountId) -> DispatchResult {
             let sender = ensure_signed(origin)?;
 
@@ -363,7 +363,7 @@ pub mod pallet {
         /// on the network for a defined time period, see MorConfig. This method will raise
         /// errors if the authorization in Peaq-DID fails or if the machine is not registered
         /// in Peaq-MOR.
-        #[pallet::weight(<WeightOf<T>>::get_online_rewards())]
+        #[pallet::weight(WeightOf::<T>::get_online_rewards())]
         pub fn get_online_rewards(origin: OriginFor<T>, machine: T::AccountId) -> DispatchResult {
             let sender = ensure_signed(origin)?;
 
