@@ -1,24 +1,33 @@
 //! Runtime mockup with this pallet for testing purposes.
 use crate as peaq_pallet_mor;
-use crate::types::{BalanceOf, MorConfig};
+pub use crate::{
+    mock_const::*,
+    types::{BalanceOf, MorConfig}
+};
 
-use frame_support::{parameter_types, PalletId};
+use frame_benchmarking::account;
+#[cfg(feature = "std")]
+use frame_support::traits::GenesisBuild;
+use frame_support::{parameter_types, construct_runtime, PalletId};
+use frame_system;
 use pallet_balances;
 use pallet_timestamp;
-use sp_core::{sr25519, Pair, H256};
+use sp_core::{sr25519, H256};
 use sp_runtime::{
     testing::Header,
     traits::{AccountIdConversion, BlakeTwo256, IdentityLookup},
 };
+use sp_io;
+use sp_std::{vec, vec::Vec, boxed::Box};
 
 // system
-type Block = frame_system::mocking::MockBlock<Test>;
-type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
+pub type Block = frame_system::mocking::MockBlock<Test>;
+pub type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 // pallet-balances
 pub type BalancesType = u128;
 
 // Configure a mock runtime to test the pallet.
-frame_support::construct_runtime!(
+construct_runtime!(
     pub enum Test where
         Block = Block,
         NodeBlock = Block,
@@ -111,18 +120,10 @@ impl peaq_pallet_mor::Config for Test {
     type WeightInfo = peaq_pallet_mor::weights::SubstrateWeight<Test>;
 }
 
-// Some constants for the test
-pub(crate) const O_ACCT: &'static str = "Alice"; // Owner
-pub(crate) const U_ACCT: &'static str = "SomeUser"; // User
-pub(crate) const M_ACCT: &'static str = "RPi001"; // Machine
 
 // Build genesis storage according to the mock runtime.
+#[allow(dead_code)]
 pub fn new_test_ext() -> sp_io::TestExternalities {
-    let mut test_ext = frame_system::GenesisConfig::default()
-        .build_storage::<Test>()
-        .unwrap()
-        .into();
-
     //  creates a default balance for the owner account
     let owner = account_key(O_ACCT);
     let user = account_key(U_ACCT);
@@ -130,6 +131,14 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
     let mor_pot = PotId::get().into_account_truncating();
 
     // setup genesis configuration details
+    let mut test_ext = frame_system::GenesisConfig::default()
+        .build_storage::<Test>()
+        .unwrap();
+
+    pallet_sudo::GenesisConfig::<Test> { key: Some(owner.clone()) }
+		.assimilate_storage(&mut test_ext)
+		.unwrap();
+
     pallet_balances::GenesisConfig::<Test> {
         balances: vec![
             (owner, 10_000_000_000_000_000_000),
@@ -143,7 +152,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 
     peaq_pallet_mor::GenesisConfig::<Test> {
         mor_config: MorConfig { 
-            registration_reward: BalanceOf::<Test>::from(100_000_000_000_000_000u128),
+            registration_reward: BalanceOf::<Test>::from(REG_FEE),
             machine_usage_fee_min: BalanceOf::<Test>::from(100_000_000_000_000_000u128),
             machine_usage_fee_max: BalanceOf::<Test>::from(3_000_000_000_000_000_000u128),
             track_n_block_rewards: 10u8
@@ -155,8 +164,8 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
     test_ext.into()
 }
 
-pub fn account_key(s: &str) -> sr25519::Public {
-    sr25519::Pair::from_string(&format!("//{}", s), None)
-        .expect("static values are valid; qed")
-        .public()
+
+#[allow(dead_code)]
+pub fn account_key(s: &'static str) -> <Test as frame_system::Config>::AccountId {
+    account(s, 0, 0)
 }
