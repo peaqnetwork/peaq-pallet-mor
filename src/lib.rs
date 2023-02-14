@@ -59,6 +59,7 @@
 //!     ```ignore
 //!     parameter_types! {
 //!	        pub const PotMorId: PalletId = PalletId(*b"PotMchOw");
+//!         pub const ExistentialDeposit: u128 = 500;
 //!     }
 //!     ```
 //!
@@ -66,6 +67,7 @@
 //!     ```ignore
 //!     impl peaq_pallet_mor::Config for Runtime {
 //!         type Event = Event;
+//!         type ExistentialDeposit = ExistentialDeposit;
 //!         type Currency = Balances;
 //!         type PotId = PotMorId;
 //!         type WeightInfo = peaq_pallet_mor::weights::SubstrateWeight<Runtime>;
@@ -131,6 +133,9 @@
 #![recursion_limit = "256"]
 
 pub use pallet::*;
+
+#[cfg(any(test, feature = "runtime-benchmarks"))]
+mod mock_const;
 
 #[cfg(test)]
 mod mock;

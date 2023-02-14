@@ -1,6 +1,9 @@
 //! Runtime mockup with this pallet for testing purposes.
 use crate as peaq_pallet_mor;
-use crate::types::{BalanceOf, MorConfig};
+pub use crate::{
+    mock_const::*,
+    types::{BalanceOf, MorConfig}
+};
 
 use frame_benchmarking::account;
 #[cfg(feature = "std")]
@@ -116,15 +119,6 @@ impl peaq_pallet_mor::Config for Test {
     type PotId = PotId;
     type WeightInfo = peaq_pallet_mor::weights::SubstrateWeight<Test>;
 }
-
-
-// Some constants for the test
-pub const O_ACCT: &'static str = "Alice"; // Owner
-pub const U_ACCT: &'static str = "Bob"; // User
-pub const M_ACCT: &'static str = "RPi001"; // Machine
-pub const M_ATTR: &[u8] = b"Type";
-pub const M_VAL: &[u8] = b"RPiMachine";
-pub const REG_FEE: u128 = 100_000_000_000_000_000u128;
 
 
 // Build genesis storage according to the mock runtime.
