@@ -10,7 +10,6 @@ use frame_support::{assert_noop, assert_ok};
 use sp_core::sr25519::Public;
 use sp_runtime::traits::BadOrigin;
 
-
 fn register_machine_did(owner: Public, machine: Public) {
     // Register at least one attribute on Peaq-DID.
     // Expect no error.
@@ -36,7 +35,7 @@ fn def_config(
     registration_reward: BalanceOf<Test>,
     machine_usage_fee_min: BalanceOf<Test>,
     machine_usage_fee_max: BalanceOf<Test>,
-    track_n_block_rewards: u8
+    track_n_block_rewards: u8,
 ) -> MorConfig<BalanceOf<Test>> {
     MorConfig {
         registration_reward,
@@ -115,11 +114,7 @@ fn pay_machine_usage_test() {
         // Try to pay out of range.
         // Expect error MachinePaymentOutOfRange.
         assert_noop!(
-            PeaqMor::pay_machine_usage(
-                Origin::signed(muser),
-                machine,
-                amount_oor
-            ),
+            PeaqMor::pay_machine_usage(Origin::signed(muser), machine, amount_oor),
             Error::<Test>::MachinePaymentOutOfRange
         );
     });
@@ -186,10 +181,7 @@ fn fetch_pot_balance_test() {
 
         // Try to fetch configuration details as regular user.
         // Expect error BadOrigin.
-        assert_noop!(
-            PeaqMor::fetch_pot_balance(Origin::signed(muser)),
-            BadOrigin
-        );
+        assert_noop!(PeaqMor::fetch_pot_balance(Origin::signed(muser)), BadOrigin);
 
         // Try to fetch current pot-balance of the pallet.
         // Expect no error.

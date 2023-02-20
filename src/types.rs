@@ -1,13 +1,12 @@
 //! All pallet relevant structs are defined here
 
 use codec::{Decode, Encode};
-use frame_support::traits::Currency;
 use frame_support::traits::tokens::Balance as BalanceT;
+use frame_support::traits::Currency;
 use scale_info::TypeInfo;
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
 use sp_core::RuntimeDebug;
-
 
 /// Short form type definition to simplify method definition.
 pub type BalanceOf<T> =
@@ -15,8 +14,6 @@ pub type BalanceOf<T> =
 /// Short form type definition to simplify method definition. This definition is neccessary
 /// due to the tight coupling of another pallet (Peaq-DID).
 pub type WeightOf<T> = <T as crate::Config>::WeightInfo;
-
-
 
 /// This struct defines the configurable paramters of the Peaq-MOR pallet. All contained
 /// parameters can be configured by a dispatchable function (extrinsic).
@@ -43,7 +40,7 @@ impl<Balance: BalanceT> MorConfig<Balance> {
         // this parameter affects resulting vector size, therefor not allowed to be zero!
         let blocks = self.track_n_block_rewards > 0;
         let range_usage = self.machine_usage_fee_max > self.machine_usage_fee_min;
-        let range_min = self.registration_reward > existential_deposit 
+        let range_min = self.registration_reward > existential_deposit
             && self.machine_usage_fee_min > existential_deposit;
 
         blocks && range_usage && range_min
@@ -53,7 +50,7 @@ impl<Balance: BalanceT> MorConfig<Balance> {
 impl<Balance: BalanceT> Default for MorConfig<Balance> {
     fn default() -> Self {
         MorConfig {
-            // Because Balance can only be set to zero to keep the pallet as generic 
+            // Because Balance can only be set to zero to keep the pallet as generic
             // as possible - set every parameter to zero! Except for track_n_block_rewards!
             // -> an initial configuration has to be done in Genesis or after deployment...
             registration_reward: Balance::zero(),

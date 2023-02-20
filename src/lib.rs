@@ -87,7 +87,7 @@
 //!         }
 //!     }
 //!     ```
-//! 
+//!
 //! - Add/configure genesis configuration `GenesisConfig<T>`:
 //!     ```ignore
 //!     GenesisConfig {
@@ -159,14 +159,13 @@ pub mod pallet {
     use frame_support::{
         pallet_prelude::*,
         traits::{
-            Currency, ExistenceRequirement, Get, Imbalance, LockableCurrency,
-            ReservableCurrency
+            Currency, ExistenceRequirement, Get, Imbalance, LockableCurrency, ReservableCurrency,
         },
         PalletId,
     };
     use frame_system::pallet_prelude::*;
     use sp_io::hashing::blake2_256;
-    use sp_runtime::traits::{AccountIdConversion, Zero, One};
+    use sp_runtime::traits::{AccountIdConversion, One, Zero};
     use sp_std::{vec, vec::Vec};
 
     use peaq_pallet_did::{did::Did, Pallet as DidPallet};
@@ -186,19 +185,17 @@ pub mod pallet {
         types::*,
     };
 
-
     macro_rules! dpatch_dposit_par {
         ($res:expr, $event:expr) => {
             match $res {
                 Ok(_d) => {
                     Self::deposit_event($event);
                     Ok(())
-                },
+                }
                 Err(e) => Err(e),
             }
-        }
+        };
     }
-
 
     #[pallet::pallet]
     #[pallet::generate_store(pub(super) trait Store)]
@@ -215,8 +212,8 @@ pub mod pallet {
         type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 
         /// The minimum amount required to keep an account open.
-		#[pallet::constant]
-		type ExistentialDeposit: Get<BalanceOf<Self>>;
+        #[pallet::constant]
+        type ExistentialDeposit: Get<BalanceOf<Self>>;
 
         /// The currency type.
         type Currency: Currency<Self::AccountId>
@@ -248,7 +245,8 @@ pub mod pallet {
     /// Vec of balances of collected block-rewards.
     #[pallet::storage]
     #[pallet::getter(fn rewards_record_of)]
-    pub(super) type RewardsRecordStorage<T: Config> = StorageValue<_, (u8, Vec<BalanceOf<T>>), ValueQuery>;
+    pub(super) type RewardsRecordStorage<T: Config> =
+        StorageValue<_, (u8, Vec<BalanceOf<T>>), ValueQuery>;
 
     /// This storage is for the sum over collected block-rewards. This amount will be
     /// transfered to an owner's account, when he requests the online-reward for his
@@ -298,7 +296,7 @@ pub mod pallet {
         MorAuthorizationFailed,
         MorConfigIsNotConsistent,
         TokensCouldNotBeTransfered,
-        UnexpectedDidError
+        UnexpectedDidError,
     }
 
     impl<T: Config> Error<T> {
@@ -336,7 +334,10 @@ pub mod pallet {
         fn build(&self) {
             assert!(self.mor_config.is_consistent(T::ExistentialDeposit::get()));
 
-            let reward_record = (0u8, vec![BalanceOf::<T>::zero(); self.mor_config.track_n_block_rewards as usize]);
+            let reward_record = (
+                0u8,
+                vec![BalanceOf::<T>::zero(); self.mor_config.track_n_block_rewards as usize],
+            );
 
             MorConfigStorage::<T>::put(self.mor_config.clone());
             RewardsRecordStorage::<T>::put(reward_record);
@@ -353,7 +354,10 @@ pub mod pallet {
         /// method will raise errors if the machine is already registered, or if the
         /// authorization in Peaq-DID fails.
         #[pallet::weight(WeightOf::<T>::get_registration_reward())]
-        pub fn get_registration_reward(origin: OriginFor<T>, machine: T::AccountId) -> DispatchResult {
+        pub fn get_registration_reward(
+            origin: OriginFor<T>,
+            machine: T::AccountId,
+        ) -> DispatchResult {
             let sender = ensure_signed(origin)?;
 
             let reward = Self::register_machine(&sender, &machine).map_err(Error::<T>::from_mor)?;
@@ -415,7 +419,7 @@ pub mod pallet {
             if config.is_consistent(T::ExistentialDeposit::get()) {
                 Self::resize_track_storage(config.track_n_block_rewards);
                 MorConfigStorage::<T>::put(config.clone());
-                
+
                 Self::deposit_event(Event::<T>::MorConfigChanged(config));
                 Ok(())
             } else {
@@ -440,7 +444,7 @@ pub mod pallet {
     impl<T: Config> MorBalance<T::AccountId, BalanceOf<T>> for Pallet<T> {
         fn mint_to_account(account: &T::AccountId, amount: BalanceOf<T>) -> DispatchResult {
             let imbalance = T::Currency::issue(amount);
-            
+
             let amount = imbalance.peek();
 
             let imbalance = T::Currency::deposit_creating(account, amount);

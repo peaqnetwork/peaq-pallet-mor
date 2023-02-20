@@ -2,23 +2,23 @@
 use crate as peaq_pallet_mor;
 pub use crate::{
     mock_const::*,
-    types::{BalanceOf, MorConfig}
+    types::{BalanceOf, MorConfig},
 };
 
 use frame_benchmarking::account;
 #[cfg(feature = "std")]
 use frame_support::traits::GenesisBuild;
-use frame_support::{parameter_types, construct_runtime, PalletId};
+use frame_support::{construct_runtime, parameter_types, PalletId};
 use frame_system;
 use pallet_balances;
 use pallet_timestamp;
 use sp_core::{sr25519, H256};
+use sp_io;
 use sp_runtime::{
     testing::Header,
     traits::{AccountIdConversion, BlakeTwo256, IdentityLookup},
 };
-use sp_io;
-use sp_std::{vec, vec::Vec, boxed::Box};
+use sp_std::{boxed::Box, vec, vec::Vec};
 
 // system
 pub type Block = frame_system::mocking::MockBlock<Test>;
@@ -120,7 +120,6 @@ impl peaq_pallet_mor::Config for Test {
     type WeightInfo = peaq_pallet_mor::weights::SubstrateWeight<Test>;
 }
 
-
 // Build genesis storage according to the mock runtime.
 #[allow(dead_code)]
 pub fn new_test_ext() -> sp_io::TestExternalities {
@@ -135,9 +134,11 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
         .build_storage::<Test>()
         .unwrap();
 
-    pallet_sudo::GenesisConfig::<Test> { key: Some(owner.clone()) }
-		.assimilate_storage(&mut test_ext)
-		.unwrap();
+    pallet_sudo::GenesisConfig::<Test> {
+        key: Some(owner.clone()),
+    }
+    .assimilate_storage(&mut test_ext)
+    .unwrap();
 
     pallet_balances::GenesisConfig::<Test> {
         balances: vec![
@@ -151,19 +152,18 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
     .unwrap();
 
     peaq_pallet_mor::GenesisConfig::<Test> {
-        mor_config: MorConfig { 
+        mor_config: MorConfig {
             registration_reward: BalanceOf::<Test>::from(REG_FEE),
             machine_usage_fee_min: BalanceOf::<Test>::from(100_000_000_000_000_000u128),
             machine_usage_fee_max: BalanceOf::<Test>::from(3_000_000_000_000_000_000u128),
-            track_n_block_rewards: 10u8
-        }
+            track_n_block_rewards: 10u8,
+        },
     }
     .assimilate_storage(&mut test_ext)
     .unwrap();
 
     test_ext.into()
 }
-
 
 #[allow(dead_code)]
 pub fn account_key(s: &'static str) -> <Test as frame_system::Config>::AccountId {
