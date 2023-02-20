@@ -58,7 +58,7 @@
 //! - Define a Pot-Account for it, for example:
 //!     ```ignore
 //!     parameter_types! {
-//!	        pub const PotMorId: PalletId = PalletId(*b"PotMchOw");
+//!         pub const PotMorId: PalletId = PalletId(*b"PotMchOw");
 //!         pub const ExistentialDeposit: u128 = 500;
 //!     }
 //!     ```
@@ -92,19 +92,19 @@
 //! - Add/configure genesis configuration `GenesisConfig<T>`:
 //!     ```ignore
 //!     GenesisConfig {
-//!		system: SystemConfig {
-//!			// Add Wasm runtime to storage.
-//!			code: wasm_binary.to_vec(),
-//!		},
+//!     system: SystemConfig {
+//!         // Add Wasm runtime to storage.
+//!         code: wasm_binary.to_vec(),
+//!     },
 //!     // ...
 //!     peaq_mor: PeaqMorConfig {
-//!			mor_config: MorConfig {
-//!				registration_reward: 100_000_000_000_000_000u128,
-//!				machine_usage_fee_min: 1_000u128,
-//!				machine_usage_fee_max: 3_000_000_000_000_000_000u128,
-//!				track_n_block_rewards: 200,
-//!			},
-//!		},
+//!         mor_config: MorConfig {
+//!             registration_reward: 100_000_000_000_000_000u128,
+//!             machine_usage_fee_min: 1_000u128,
+//!             machine_usage_fee_max: 3_000_000_000_000_000_000u128,
+//!             track_n_block_rewards: 200,
+//!         },
+//!     },
 //!     ```
 //!
 //! - Implement a mechanism to fill that Pot-account `PotMorId`
