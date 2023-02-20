@@ -52,35 +52,35 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	// Storage: PeaqMor MorConfigStorage (r:1 w:0)
 	// Storage: System Account (r:1 w:1)
 	fn get_registration_reward() -> Weight {
-		Weight::from_ref_time(103_191_000 as u64)
-			.saturating_add(T::DbWeight::get().reads(4 as u64))
-			.saturating_add(T::DbWeight::get().writes(2 as u64))
+		Weight::from_ref_time(103_191_000_u64)
+			.saturating_add(T::DbWeight::get().reads(4_u64))
+			.saturating_add(T::DbWeight::get().writes(2_u64))
 	}
 	// Storage: PeaqDid OwnerStore (r:1 w:0)
 	// Storage: PeaqMor MachineRegister (r:1 w:0)
 	// Storage: PeaqMor PeriodRewardStorage (r:1 w:0)
 	// Storage: System Account (r:1 w:0)
 	fn get_online_rewards() -> Weight {
-		Weight::from_ref_time(60_260_000 as u64)
-			.saturating_add(T::DbWeight::get().reads(4 as u64))
+		Weight::from_ref_time(60_260_000_u64)
+			.saturating_add(T::DbWeight::get().reads(4_u64))
 	}
 	// Storage: PeaqMor MorConfigStorage (r:1 w:0)
 	// Storage: System Account (r:1 w:1)
 	fn pay_machine_usage() -> Weight {
-		Weight::from_ref_time(82_005_000 as u64)
-			.saturating_add(T::DbWeight::get().reads(2 as u64))
-			.saturating_add(T::DbWeight::get().writes(1 as u64))
+		Weight::from_ref_time(82_005_000_u64)
+			.saturating_add(T::DbWeight::get().reads(2_u64))
+			.saturating_add(T::DbWeight::get().writes(1_u64))
 	}
 	// Storage: PeaqMor RewardsRecordStorage (r:1 w:1)
 	// Storage: PeaqMor MorConfigStorage (r:0 w:1)
 	fn set_configuration() -> Weight {
-		Weight::from_ref_time(40_939_000 as u64)
-			.saturating_add(T::DbWeight::get().reads(1 as u64))
-			.saturating_add(T::DbWeight::get().writes(2 as u64))
+		Weight::from_ref_time(40_939_000_u64)
+			.saturating_add(T::DbWeight::get().reads(1_u64))
+			.saturating_add(T::DbWeight::get().writes(2_u64))
 	}
 	// Storage: System Account (r:1 w:0)
 	fn fetch_pot_balance() -> Weight {
-		Weight::from_ref_time(30_821_000 as u64)
-			.saturating_add(T::DbWeight::get().reads(1 as u64))
+		Weight::from_ref_time(30_821_000_u64)
+			.saturating_add(T::DbWeight::get().reads(1_u64))
 	}
 }

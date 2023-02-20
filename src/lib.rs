@@ -54,15 +54,15 @@
 //!
 //! How to generally add a pallet to the runtime, have a look at the substrate's
 //! documentation. Basic steps are:
-//!
-//! - Define a Pot-Account for it, e.g.:
+//! 
+//! - Define a Pot-Account for it, for example:
 //!     ```ignore
 //!     parameter_types! {
 //!	        pub const PotMorId: PalletId = PalletId(*b"PotMchOw");
 //!         pub const ExistentialDeposit: u128 = 500;
 //!     }
 //!     ```
-//!
+//! 
 //! - Configure the pallet within the runtime by defining:
 //!     ```ignore
 //!     impl peaq_pallet_mor::Config for Runtime {
@@ -73,6 +73,7 @@
 //!         type WeightInfo = peaq_pallet_mor::weights::SubstrateWeight<Runtime>;
 //!     }
 //!     ```
+//! 
 //! - Add pallet on list of pallets within `construct_runtime!` macro:
 //!     ```ignore
 //!     construct_runtime! {
@@ -156,6 +157,7 @@ pub use weights::WeightInfo;
 #[frame_support::pallet]
 pub mod pallet {
 
+    use core::cmp::Ordering;
     use frame_support::{
         pallet_prelude::*,
         traits::{
@@ -363,7 +365,7 @@ pub mod pallet {
             let reward = Self::register_machine(&sender, &machine).map_err(Error::<T>::from_mor)?;
 
             dpatch_dposit_par!(
-                Self::mint_to_account(&sender, reward.clone()),
+                Self::mint_to_account(&sender, reward),
                 Event::<T>::RegistrationRewardPayed(sender, reward)
             )
         }
@@ -379,7 +381,7 @@ pub mod pallet {
             let reward = Self::reward_machine(&sender, &machine).map_err(Error::<T>::from_mor)?;
 
             dpatch_dposit_par!(
-                Self::transfer_from_pot(&sender, reward.clone()),
+                Self::transfer_from_pot(&sender, reward),
                 Event::<T>::OnlineRewardsPayed(sender, reward)
             )
         }
@@ -402,7 +404,7 @@ pub mod pallet {
                 Err(Error::<T>::from_mor(MachinePaymentOutOfRange))
             } else {
                 dpatch_dposit_par!(
-                    Self::mint_to_account(&machine, amount.clone()),
+                    Self::mint_to_account(&machine, amount),
                     Event::<T>::MachineUsagePayed(machine, amount)
                 )
             }
@@ -486,19 +488,24 @@ pub mod pallet {
         }
 
         fn resize_track_storage(new_size: u8) {
+            let new_size = new_size as usize;
             let (_slot_cnt, mut balances) = RewardsRecordStorage::<T>::get();
 
             let cur_size = balances.len();
-            if cur_size < new_size as usize {
-                balances.resize(new_size as usize, BalanceOf::<T>::zero());
-                let slot_cnt = cur_size as u8;
-                assert!(balances.len() == new_size as usize);
-                RewardsRecordStorage::<T>::put((slot_cnt, balances));
-            } else if cur_size > new_size as usize {
-                let slot_cnt = 0u8;
-                let balances = balances.split_off(cur_size - (new_size as usize));
-                assert!(balances.len() == new_size as usize);
-                RewardsRecordStorage::<T>::put((slot_cnt, balances));
+            match cur_size.cmp(&new_size) {
+                Ordering::Less => {
+                    balances.resize(new_size, BalanceOf::<T>::zero());
+                    let slot_cnt = cur_size as u8;
+                    assert!(balances.len() == new_size);
+                    RewardsRecordStorage::<T>::put((slot_cnt, balances));
+                },
+                Ordering::Greater => {
+                    let slot_cnt = 0u8;
+                    let balances = balances.split_off(cur_size - new_size);
+                    assert!(balances.len() == new_size);
+                    RewardsRecordStorage::<T>::put((slot_cnt, balances));
+                },
+                _ => {},
             }
         }
     }
