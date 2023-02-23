@@ -335,15 +335,7 @@ pub mod pallet {
     impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
         fn build(&self) {
             assert!(self.mor_config.is_consistent(T::ExistentialDeposit::get()));
-
-            let reward_record = (
-                0u8,
-                vec![BalanceOf::<T>::zero(); self.mor_config.track_n_block_rewards as usize],
-            );
-
-            MorConfigStorage::<T>::put(self.mor_config.clone());
-            RewardsRecordStorage::<T>::put(reward_record);
-            PeriodRewardStorage::<T>::put(BalanceOf::<T>::zero());
+            Pallet::<T>::init_storages(&self.mor_config);
         }
     }
 
@@ -353,8 +345,8 @@ pub mod pallet {
             let mor_config = MorConfigStorage::<T>::get();
             let reward_rec = RewardsRecordStorage::<T>::get();
             if mor_config.track_n_block_rewards as usize != reward_rec.1.len() {
-                let genesis = GenesisConfig::<T>::default();
-                genesis.build();
+                let mor_config = MorConfig::<BalanceOf<T>>::default();
+                Self::init_storages(&mor_config);
                 T::DbWeight::get().reads_writes(2, 3)
             } else {
                 T::DbWeight::get().reads_writes(2, 0)
@@ -454,6 +446,20 @@ pub mod pallet {
 
             Self::deposit_event(Event::<T>::FetchedPotBalance(amount));
             Ok(())
+        }
+    }
+
+    impl<T: Config> Pallet<T> {
+        /// This method internally initialises the pallet's storages in dependency of the given MorConfig.
+        pub(crate) fn init_storages(mor_config: &MorConfig<BalanceOf<T>>) {
+            let reward_record = (
+                0u8,
+                vec![BalanceOf::<T>::zero(); mor_config.track_n_block_rewards as usize],
+            );
+
+            MorConfigStorage::<T>::put(mor_config.clone());
+            RewardsRecordStorage::<T>::put(reward_record);
+            PeriodRewardStorage::<T>::put(BalanceOf::<T>::zero());
         }
     }
 
