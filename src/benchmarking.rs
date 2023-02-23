@@ -4,21 +4,18 @@ use super::*;
 
 use crate::{
     mock_const::*,
-    Pallet as PeaqMor,
     types::{BalanceOf, MorConfig},
+    Pallet as PeaqMor,
 };
-use peaq_pallet_did::Pallet as PeaqDid;
-use frame_benchmarking::{
-    account, benchmarks, impl_benchmark_test_suite
-};
+use frame_benchmarking::{account, benchmarks, impl_benchmark_test_suite};
 use frame_system::{Pallet as System, RawOrigin};
+use peaq_pallet_did::Pallet as PeaqDid;
 use sp_runtime::traits::Zero;
 
 /// Assert that the last event equals the provided one.
 fn assert_last_event<T: Config>(generic_event: <T as Config>::Event) {
     System::<T>::assert_last_event(generic_event.into());
 }
-
 
 benchmarks! {
     where_clause { where
@@ -74,7 +71,7 @@ benchmarks! {
     }
 
     set_configuration {
-        let config: MorConfig<BalanceOf<T>> = MorConfig::<BalanceOf<T>>{ 
+        let config: MorConfig<BalanceOf<T>> = MorConfig::<BalanceOf<T>>{
             registration_reward: BalanceOf::<T>::from(REG_FEE),
             machine_usage_fee_min: BalanceOf::<T>::from(100_000_000_000_000_000u128),
             machine_usage_fee_max: BalanceOf::<T>::from(3_000_000_000_000_000_000u128),
