@@ -199,6 +199,7 @@ pub mod pallet {
         };
     }
 
+
     #[pallet::pallet]
     #[pallet::generate_store(pub(super) trait Store)]
     #[pallet::without_storage_info]
@@ -230,6 +231,7 @@ pub mod pallet {
         /// Weight information for extrinsics in this pallet.
         type WeightInfo: WeightInfo;
     }
+
 
     /// This storage is only a lookup table, to make sure, that each machine will be
     /// registered only once (prevents registering same machine on different accounts).
@@ -264,6 +266,7 @@ pub mod pallet {
     pub(super) type MorConfigStorage<T: Config> =
         StorageValue<_, MorConfig<BalanceOf<T>>, ValueQuery>;
 
+
     /// Possible Event types of this pallet.
     #[pallet::event]
     #[pallet::generate_deposit(pub(super) fn deposit_event)]
@@ -285,6 +288,7 @@ pub mod pallet {
         /// Sent when a registration rewards have been transfered.
         RegistrationRewardPayed(T::AccountId, BalanceOf<T>),
     }
+
 
     /// For description of error types, please have a look into module error for
     /// further informations about error types.
@@ -317,6 +321,7 @@ pub mod pallet {
         }
     }
 
+
     #[pallet::genesis_config]
     pub struct GenesisConfig<T: Config> {
         pub mor_config: MorConfig<BalanceOf<T>>,
@@ -346,6 +351,23 @@ pub mod pallet {
             PeriodRewardStorage::<T>::put(BalanceOf::<T>::zero());
         }
     }
+
+
+    #[pallet::hooks]
+	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
+		fn on_runtime_upgrade() -> frame_support::weights::Weight {
+			let mor_config = MorConfigStorage::<T>::get();
+            let reward_rec = RewardsRecordStorage::<T>::get();
+            if mor_config.track_n_block_rewards as usize != reward_rec.1.len() {
+                let genesis = GenesisConfig::<T>::default();
+                genesis.build();
+                T::DbWeight::get().reads_writes(2, 3)
+            } else {
+                T::DbWeight::get().reads_writes(2, 0)
+            }
+		}
+	}
+
 
     // Dispatchable functions allows users to interact with the pallet and invoke state changes.
     // These functions materialize as "extrinsics", which are often compared to transactions.
