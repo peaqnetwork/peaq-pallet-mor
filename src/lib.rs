@@ -54,7 +54,7 @@
 //!
 //! How to generally add a pallet to the runtime, have a look at the substrate's
 //! documentation. Basic steps are:
-//! 
+//!
 //! - Define a Pot-Account for it, for example:
 //!     ```ignore
 //!     parameter_types! {
@@ -62,7 +62,7 @@
 //!         pub const ExistentialDeposit: u128 = 500;
 //!     }
 //!     ```
-//! 
+//!
 //! - Configure the pallet within the runtime by defining:
 //!     ```ignore
 //!     impl peaq_pallet_mor::Config for Runtime {
@@ -73,7 +73,7 @@
 //!         type WeightInfo = peaq_pallet_mor::weights::SubstrateWeight<Runtime>;
 //!     }
 //!     ```
-//! 
+//!
 //! - Add pallet on list of pallets within `construct_runtime!` macro:
 //!     ```ignore
 //!     construct_runtime! {
@@ -498,14 +498,14 @@ pub mod pallet {
                     let slot_cnt = cur_size as u8;
                     assert!(balances.len() == new_size);
                     RewardsRecordStorage::<T>::put((slot_cnt, balances));
-                },
+                }
                 Ordering::Greater => {
                     let slot_cnt = 0u8;
                     let balances = balances.split_off(cur_size - new_size);
                     assert!(balances.len() == new_size);
                     RewardsRecordStorage::<T>::put((slot_cnt, balances));
-                },
-                _ => {},
+                }
+                _ => {}
             }
         }
     }
