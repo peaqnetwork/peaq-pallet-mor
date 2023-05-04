@@ -60,8 +60,8 @@ impl frame_system::Config for Test {
     type BlockWeights = ();
     type BlockLength = ();
     type DbWeight = ();
-    type Origin = Origin;
-    type Call = Call;
+    type RuntimeOrigin = RuntimeOrigin;
+    type RuntimeCall = RuntimeCall;
     type Index = u64;
     type BlockNumber = u64;
     type Hash = H256;
@@ -69,7 +69,7 @@ impl frame_system::Config for Test {
     type AccountId = sr25519::Public;
     type Lookup = IdentityLookup<Self::AccountId>;
     type Header = Header;
-    type Event = Event;
+    type RuntimeEvent = RuntimeEvent;
     type BlockHashCount = BlockHashCount;
     type Version = ();
     type PalletInfo = PalletInfo;
@@ -83,8 +83,8 @@ impl frame_system::Config for Test {
 }
 
 impl pallet_sudo::Config for Test {
-    type Event = Event;
-    type Call = Call;
+    type RuntimeEvent = RuntimeEvent;
+    type RuntimeCall = RuntimeCall;
 }
 
 impl pallet_timestamp::Config for Test {
@@ -99,7 +99,7 @@ impl pallet_balances::Config for Test {
     type MaxReserves = ();
     type ReserveIdentifier = [u8; 8];
     type Balance = BalancesType;
-    type Event = Event;
+    type RuntimeEvent = RuntimeEvent;
     type DustRemoval = ();
     type ExistentialDeposit = ExistentialDeposit;
     type AccountStore = System;
@@ -107,13 +107,13 @@ impl pallet_balances::Config for Test {
 }
 
 impl peaq_pallet_did::Config for Test {
-    type Event = Event;
+    type RuntimeEvent = RuntimeEvent;
     type Time = pallet_timestamp::Pallet<Test>;
     type WeightInfo = peaq_pallet_did::weights::SubstrateWeight<Test>;
 }
 
 impl peaq_pallet_mor::Config for Test {
-    type Event = Event;
+    type RuntimeEvent = RuntimeEvent;
     type ExistentialDeposit = ExistentialDeposit;
     type Currency = Balances;
     type PotId = PotId;

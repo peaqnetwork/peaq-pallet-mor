@@ -14,7 +14,7 @@ fn register_machine_did(owner: Public, machine: Public) {
     // Register at least one attribute on Peaq-DID.
     // Expect no error.
     assert_ok!(PeaqDid::add_attribute(
-        Origin::signed(owner),
+        RuntimeOrigin::signed(owner),
         machine,
         M_ATTR.to_vec(),
         M_VAL.to_vec(),
@@ -26,7 +26,7 @@ fn get_registration_reward_mor(owner: Public, machine: Public) {
     // Request rewards for new machine on Peaq-MOR.
     // Expect no error.
     assert_ok!(PeaqMor::get_registration_reward(
-        Origin::signed(owner),
+        RuntimeOrigin::signed(owner),
         machine
     ));
 }
@@ -54,7 +54,7 @@ fn register_new_machine_test() {
         // Try to register new machine on Peaq-MOR, which is not registered in Peaq-DID.
         // Expect error DidAuthorizationFailed.
         assert_noop!(
-            PeaqMor::get_registration_reward(Origin::signed(owner), machine),
+            PeaqMor::get_registration_reward(RuntimeOrigin::signed(owner), machine),
             Error::<Test>::DidAuthorizationFailed
         );
 
@@ -72,7 +72,7 @@ fn get_online_rewards_test() {
         // Try to collect rewards. No machines registered.
         // Expect error AuthorizationFailed.
         assert_noop!(
-            PeaqMor::get_online_rewards(Origin::signed(owner), machine),
+            PeaqMor::get_online_rewards(RuntimeOrigin::signed(owner), machine),
             Error::<Test>::DidAuthorizationFailed
         );
 
@@ -82,7 +82,7 @@ fn get_online_rewards_test() {
         // Try to register new machine on Peaq-MOR, which is only registered in Peaq-DID.
         // Expect error MorAuthorizationFailed.
         assert_noop!(
-            PeaqMor::get_online_rewards(Origin::signed(owner), machine),
+            PeaqMor::get_online_rewards(RuntimeOrigin::signed(owner), machine),
             Error::<Test>::MachineNotRegistered
         );
 
@@ -91,7 +91,7 @@ fn get_online_rewards_test() {
 
         // Now get the online rewards.
         // Expect no error.
-        assert_ok!(PeaqMor::get_online_rewards(Origin::signed(owner), machine));
+        assert_ok!(PeaqMor::get_online_rewards(RuntimeOrigin::signed(owner), machine));
     });
 }
 
@@ -106,7 +106,7 @@ fn pay_machine_usage_test() {
         // Try to pay for machine usage.
         // Expect no error.
         assert_ok!(PeaqMor::pay_machine_usage(
-            Origin::signed(muser),
+            RuntimeOrigin::signed(muser),
             machine,
             amount
         ));
@@ -114,7 +114,7 @@ fn pay_machine_usage_test() {
         // Try to pay out of range.
         // Expect error MachinePaymentOutOfRange.
         assert_noop!(
-            PeaqMor::pay_machine_usage(Origin::signed(muser), machine, amount_oor),
+            PeaqMor::pay_machine_usage(RuntimeOrigin::signed(muser), machine, amount_oor),
             Error::<Test>::MachinePaymentOutOfRange
         );
     });
@@ -132,7 +132,7 @@ fn set_configuration_test() {
         // Expect error MorConfigIsNotConsistent.
         let config = def_config(b_low, b_med, b_med, 50);
         assert_noop!(
-            PeaqMor::set_configuration(Origin::root(), config),
+            PeaqMor::set_configuration(RuntimeOrigin::root(), config),
             Error::<Test>::MorConfigIsNotConsistent
         );
 
@@ -140,7 +140,7 @@ fn set_configuration_test() {
         // Expect error MorConfigIsNotConsistent.
         let config = def_config(b_low, b_med, b_med, 0);
         assert_noop!(
-            PeaqMor::set_configuration(Origin::root(), config),
+            PeaqMor::set_configuration(RuntimeOrigin::root(), config),
             Error::<Test>::MorConfigIsNotConsistent
         );
 
@@ -148,29 +148,29 @@ fn set_configuration_test() {
         // Expect error MorConfigIsNotConsistent.
         let config = def_config(b_too_low, b_med, b_med, 0);
         assert_noop!(
-            PeaqMor::set_configuration(Origin::root(), config),
+            PeaqMor::set_configuration(RuntimeOrigin::root(), config),
             Error::<Test>::MorConfigIsNotConsistent
         );
         let config = def_config(b_low, b_too_low, b_med, 0);
         assert_noop!(
-            PeaqMor::set_configuration(Origin::root(), config),
+            PeaqMor::set_configuration(RuntimeOrigin::root(), config),
             Error::<Test>::MorConfigIsNotConsistent
         );
 
         // Set valid configuration.
         // Expect no error.
         let config = def_config(b_low, b_med, b_max, 50);
-        assert_ok!(PeaqMor::set_configuration(Origin::root(), config));
+        assert_ok!(PeaqMor::set_configuration(RuntimeOrigin::root(), config));
 
         // Set another valid configuration with more track_n_block_rewards.
         // Expect no error.
         let config = def_config(b_low, b_med, b_max, 100);
-        assert_ok!(PeaqMor::set_configuration(Origin::root(), config));
+        assert_ok!(PeaqMor::set_configuration(RuntimeOrigin::root(), config));
 
         // Set another valid configuration with less track_n_block_rewards.
         // Expect no error.
         let config = def_config(b_low, b_med, b_max, 25);
-        assert_ok!(PeaqMor::set_configuration(Origin::root(), config));
+        assert_ok!(PeaqMor::set_configuration(RuntimeOrigin::root(), config));
     });
 }
 
@@ -180,12 +180,12 @@ fn fetch_pot_balance_test() {
         let muser = account_key(U_ACCT);
 
         // Try to fetch configuration details as regular user.
-        // Expect error BadOrigin.
-        assert_noop!(PeaqMor::fetch_pot_balance(Origin::signed(muser)), BadOrigin);
+        // Expect error BadRuntimeOrigin.
+        assert_noop!(PeaqMor::fetch_pot_balance(RuntimeOrigin::signed(muser)), BadOrigin);
 
         // Try to fetch current pot-balance of the pallet.
         // Expect no error.
-        assert_ok!(PeaqMor::fetch_pot_balance(Origin::root()));
+        assert_ok!(PeaqMor::fetch_pot_balance(RuntimeOrigin::root()));
     });
 }
 

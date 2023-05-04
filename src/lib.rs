@@ -211,7 +211,7 @@ pub mod pallet {
         BalanceOf<Self>: Zero + One + PartialOrd + Eq,
     {
         /// Because this pallet emits events, it depends on the runtime's definition of an event.
-        type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+        type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 
         /// The minimum amount required to keep an account open.
         #[pallet::constant]
@@ -362,6 +362,7 @@ pub mod pallet {
         /// Registers a new machine on the network by given account-ID and machine-ID. This
         /// method will raise errors if the machine is already registered, or if the
         /// authorization in Peaq-DID fails.
+        #[pallet::call_index(0)]
         #[pallet::weight(WeightOf::<T>::get_registration_reward())]
         pub fn get_registration_reward(
             origin: OriginFor<T>,
@@ -381,6 +382,7 @@ pub mod pallet {
         /// on the network for a defined time period, see MorConfig. This method will raise
         /// errors if the authorization in Peaq-DID fails or if the machine is not registered
         /// in Peaq-MOR.
+        #[pallet::call_index(1)]
         #[pallet::weight(WeightOf::<T>::get_online_rewards())]
         pub fn get_online_rewards(origin: OriginFor<T>, machine: T::AccountId) -> DispatchResult {
             let sender = ensure_signed(origin)?;
@@ -396,6 +398,7 @@ pub mod pallet {
         /// When using a machine, this extrinsic is about to pay the fee for the machine usage.
         /// Assumption is, that the origin is the user, which used the machine and he will pay
         /// the fee for machine usage.
+        #[pallet::call_index(2)]
         #[pallet::weight(WeightOf::<T>::pay_machine_usage())]
         pub fn pay_machine_usage(
             origin: OriginFor<T>,
@@ -418,6 +421,7 @@ pub mod pallet {
         }
 
         /// Updates the pallet's configuration parameters by passing a MorConfig-struct.
+        #[pallet::call_index(3)]
         #[pallet::weight(WeightOf::<T>::set_configuration())]
         pub fn set_configuration(
             origin: OriginFor<T>,
@@ -437,6 +441,7 @@ pub mod pallet {
         }
 
         /// This is temporary for debug and development
+        #[pallet::call_index(4)]
         #[pallet::weight(WeightOf::<T>::fetch_pot_balance())]
         pub fn fetch_pot_balance(origin: OriginFor<T>) -> DispatchResult {
             ensure_root(origin)?;

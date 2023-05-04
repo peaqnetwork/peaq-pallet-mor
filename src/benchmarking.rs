@@ -7,7 +7,7 @@ use crate::{
     types::{BalanceOf, MorConfig},
     Pallet as PeaqMor,
 };
-use frame_benchmarking::{account, benchmarks, impl_benchmark_test_suite};
+use frame_benchmarking::v1::{account, benchmarks, impl_benchmark_test_suite};
 use frame_system::{Pallet as System, RawOrigin};
 use peaq_pallet_did::Pallet as PeaqDid;
 use sp_runtime::traits::Zero;
