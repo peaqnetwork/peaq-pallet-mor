@@ -13,7 +13,7 @@ use peaq_pallet_did::Pallet as PeaqDid;
 use sp_runtime::traits::Zero;
 
 /// Assert that the last event equals the provided one.
-fn assert_last_event<T: Config>(generic_event: <T as Config>::Event) {
+fn assert_last_event<T: Config>(generic_event: <T as Config>::RuntimeEvent) {
     System::<T>::assert_last_event(generic_event.into());
 }
 
