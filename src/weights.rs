@@ -52,7 +52,7 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	// Storage: PeaqMor MorConfigStorage (r:1 w:0)
 	// Storage: System Account (r:1 w:1)
 	fn get_registration_reward() -> Weight {
-		Weight::from_ref_time(103_191_000_u64)
+		Weight::from_parts(103_191_000_u64, 1)
 			.saturating_add(T::DbWeight::get().reads(4_u64))
 			.saturating_add(T::DbWeight::get().writes(2_u64))
 	}
@@ -61,26 +61,26 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	// Storage: PeaqMor PeriodRewardStorage (r:1 w:0)
 	// Storage: System Account (r:1 w:0)
 	fn get_online_rewards() -> Weight {
-		Weight::from_ref_time(60_260_000_u64)
+		Weight::from_parts(60_260_000_u64, 1)
 			.saturating_add(T::DbWeight::get().reads(4_u64))
 	}
 	// Storage: PeaqMor MorConfigStorage (r:1 w:0)
 	// Storage: System Account (r:1 w:1)
 	fn pay_machine_usage() -> Weight {
-		Weight::from_ref_time(82_005_000_u64)
+		Weight::from_parts(82_005_000_u64, 1)
 			.saturating_add(T::DbWeight::get().reads(2_u64))
 			.saturating_add(T::DbWeight::get().writes(1_u64))
 	}
 	// Storage: PeaqMor RewardsRecordStorage (r:1 w:1)
 	// Storage: PeaqMor MorConfigStorage (r:0 w:1)
 	fn set_configuration() -> Weight {
-		Weight::from_ref_time(40_939_000_u64)
+		Weight::from_parts(40_939_000_u64, 1)
 			.saturating_add(T::DbWeight::get().reads(1_u64))
 			.saturating_add(T::DbWeight::get().writes(2_u64))
 	}
 	// Storage: System Account (r:1 w:0)
 	fn fetch_pot_balance() -> Weight {
-		Weight::from_ref_time(30_821_000_u64)
+		Weight::from_parts(30_821_000_u64, 1)
 			.saturating_add(T::DbWeight::get().reads(1_u64))
 	}
 }
