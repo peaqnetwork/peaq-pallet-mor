@@ -91,7 +91,10 @@ fn get_online_rewards_test() {
 
         // Now get the online rewards.
         // Expect no error.
-        assert_ok!(PeaqMor::get_online_rewards(RuntimeOrigin::signed(owner), machine));
+        assert_ok!(PeaqMor::get_online_rewards(
+            RuntimeOrigin::signed(owner),
+            machine
+        ));
     });
 }
 
@@ -181,7 +184,10 @@ fn fetch_pot_balance_test() {
 
         // Try to fetch configuration details as regular user.
         // Expect error BadRuntimeOrigin.
-        assert_noop!(PeaqMor::fetch_pot_balance(RuntimeOrigin::signed(muser)), BadOrigin);
+        assert_noop!(
+            PeaqMor::fetch_pot_balance(RuntimeOrigin::signed(muser)),
+            BadOrigin
+        );
 
         // Try to fetch current pot-balance of the pallet.
         // Expect no error.
