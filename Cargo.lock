@@ -1753,7 +1753,7 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-did"
 version = "0.1.0"
-source = "git+https://github.com/peaqnetwork/peaq-pallet-did?branch=feature/1206020480964643_cleanup-branches-weights#f0527e8c475894fe97df22cec0ac8565380a7116"
+source = "git+https://github.com/peaqnetwork/peaq-pallet-did?branch=dev#7c74245c69f2d835bf8582f0ea594388af2c0477"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
