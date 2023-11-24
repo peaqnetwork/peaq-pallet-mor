@@ -152,7 +152,8 @@ pub mod mor;
 pub mod types;
 
 pub mod weights;
-pub use weights::WeightInfo;
+pub mod weightinfo;
+pub use weightinfo::WeightInfo;
 
 #[frame_support::pallet]
 pub mod pallet {
