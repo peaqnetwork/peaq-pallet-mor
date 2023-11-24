@@ -34,19 +34,10 @@
 use frame_support::{traits::Get, weights::{Weight}};
 use sp_std::marker::PhantomData;
 
-/// Trait definition for peaq-pallet-mor extrinsics.
-pub trait WeightInfo {
-	fn get_registration_reward() -> Weight;
-	fn get_online_rewards() -> Weight;
-	fn pay_machine_usage() -> Weight;
-	fn set_configuration() -> Weight;
-	fn fetch_pot_balance() -> Weight;
-}
-
 /// Weight functions for `peaq_pallet_mor`.
-pub struct SubstrateWeight<T>(PhantomData<T>);
+pub struct WeightInfo<T>(PhantomData<T>);
 
-impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
+impl<T: frame_system::Config> crate::WeightInfo for WeightInfo<T> {
 	// Storage: PeaqDid OwnerStore (r:1 w:0)
 	// Storage: PeaqMor MachineRegister (r:1 w:1)
 	// Storage: PeaqMor MorConfigStorage (r:1 w:0)

@@ -114,7 +114,7 @@ impl pallet_balances::Config for Test {
 impl peaq_pallet_did::Config for Test {
     type RuntimeEvent = RuntimeEvent;
     type Time = pallet_timestamp::Pallet<Test>;
-    type WeightInfo = peaq_pallet_did::weights::SubstrateWeight<Test>;
+    type WeightInfo = peaq_pallet_did::weights::WeightInfo<Test>;
 }
 
 impl peaq_pallet_mor::Config for Test {
@@ -122,7 +122,7 @@ impl peaq_pallet_mor::Config for Test {
     type ExistentialDeposit = ExistentialDeposit;
     type Currency = Balances;
     type PotId = PotId;
-    type WeightInfo = peaq_pallet_mor::weights::SubstrateWeight<Test>;
+    type WeightInfo = peaq_pallet_mor::weights::WeightInfo<Test>;
 }
 
 // Build genesis storage according to the mock runtime.
