@@ -43,7 +43,7 @@ branch = "peaq-polkadot-v0.9.43"
 [dependencies.peaq-pallet-did]
 default-features = false
 git = "https://github.com/peaqnetwork/peaq-pallet-did"
-branch = "dev"
+branch = "feature/1206020480964643_cleanup-branches-weights"
 
 [dependencies.scale-info]
 default-features = false
