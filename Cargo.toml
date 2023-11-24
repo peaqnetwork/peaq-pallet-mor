@@ -2,97 +2,97 @@
 name = "peaq-pallet-mor"
 version = "0.1.0"
 edition = "2021"
-description = 'A pallet that handles peaq`s block reward distribution for machine owners.'
-authors = ['peaq <https://github.com/peaqnetwork>']
-homepage = 'https://peaq.network/'
-license = 'Apache-2.0'
+description = "A pallet that handles peaq`s block reward distribution for machine owners."
+authors = ["peaq <https://github.com/peaqnetwork>"]
+homepage = "https://peaq.network/"
+license = "Apache-2.0"
 publish = false
-repository = 'https://github.com/peaqnetwork/peaq-pallet-mor/'
+repository = "https://github.com/peaqnetwork/peaq-pallet-mor/"
 
 [package.metadata.docs.rs]
 targets = ["x86_64-unknown-linux-gnu"]
 
 [dev-dependencies]
-pallet-balances = { git = 'https://github.com/peaqnetwork/substrate', branch = 'peaq-polkadot-v0.9.43', default-features = false }
-pallet-sudo = { git = 'https://github.com/peaqnetwork/substrate', branch = 'peaq-polkadot-v0.9.43', default-features = false }
-pallet-timestamp = { git = 'https://github.com/peaqnetwork/substrate', branch = 'peaq-polkadot-v0.9.43', default-features = false }
+pallet-balances = { git = "https://github.com/peaqnetwork/substrate", branch = "peaq-polkadot-v0.9.43", default-features = false }
+pallet-sudo = { git = "https://github.com/peaqnetwork/substrate", branch = "peaq-polkadot-v0.9.43", default-features = false }
+pallet-timestamp = { git = "https://github.com/peaqnetwork/substrate", branch = "peaq-polkadot-v0.9.43", default-features = false }
 
 [dependencies.codec]
 default-features = false
-features = ['derive']
-package = 'parity-scale-codec'
-version = '3.2.2'
+features = ["derive"]
+package = "parity-scale-codec"
+version = "3.2.2"
 
 [dependencies.frame-benchmarking]
 default-features = false
-git = 'https://github.com/peaqnetwork/substrate'
+git = "https://github.com/peaqnetwork/substrate"
 optional = true
-branch = 'peaq-polkadot-v0.9.43'
+branch = "peaq-polkadot-v0.9.43"
 
 [dependencies.frame-support]
 default-features = false
-git = 'https://github.com/peaqnetwork/substrate'
-branch = 'peaq-polkadot-v0.9.43'
+git = "https://github.com/peaqnetwork/substrate"
+branch = "peaq-polkadot-v0.9.43"
 
 [dependencies.frame-system]
 default-features = false
-git = 'https://github.com/peaqnetwork/substrate'
-branch = 'peaq-polkadot-v0.9.43'
+git = "https://github.com/peaqnetwork/substrate"
+branch = "peaq-polkadot-v0.9.43"
 
 # [TODO] Need to change after peaq-polkadot-v0.9.43 merged
 [dependencies.peaq-pallet-did]
 default-features = false
-git = 'https://github.com/peaqnetwork/peaq-pallet-did'
-branch = 'peaq-polkadot-v0.9.43'
+git = "https://github.com/peaqnetwork/peaq-pallet-did"
+branch = "dev"
 
 [dependencies.scale-info]
 default-features = false
-features = ['derive']
-version = '2.0.1'
+features = ["derive"]
+version = "2.0.1"
 
 [dependencies.serde]
-version = '1.0'
-features = ['derive']
+version = "1.0"
+features = ["derive"]
 optional = true
 
 [dependencies.sp-core]
 default-features = false
-git = 'https://github.com/peaqnetwork/substrate'
-branch = 'peaq-polkadot-v0.9.43'
+git = "https://github.com/peaqnetwork/substrate"
+branch = "peaq-polkadot-v0.9.43"
 
 [dependencies.sp-io]
 default-features = false
-git = 'https://github.com/peaqnetwork/substrate'
-branch = 'peaq-polkadot-v0.9.43'
+git = "https://github.com/peaqnetwork/substrate"
+branch = "peaq-polkadot-v0.9.43"
 
 [dependencies.sp-runtime]
 default-features = false
-git = 'https://github.com/peaqnetwork/substrate'
-branch = 'peaq-polkadot-v0.9.43'
+git = "https://github.com/peaqnetwork/substrate"
+branch = "peaq-polkadot-v0.9.43"
 
 [dependencies.sp-std]
 default-features = false
-git = 'https://github.com/peaqnetwork/substrate'
-branch = 'peaq-polkadot-v0.9.43'
+git = "https://github.com/peaqnetwork/substrate"
+branch = "peaq-polkadot-v0.9.43"
 
 
 [features]
-default = ['std']
+default = ["std"]
 std = [
-    'codec/std',
-    'frame-benchmarking/std',
-    'frame-support/std',
-    'frame-system/std',
-    'pallet-balances/std',
-    'pallet-sudo/std',
-    'pallet-timestamp/std',
-    'peaq-pallet-did/std',
-    'scale-info/std',
-    'serde',
-    'sp-core/std',
-	'sp-io/std',
-	'sp-runtime/std',
-    'sp-std/std',
+    "codec/std",
+    "frame-benchmarking/std",
+    "frame-support/std",
+    "frame-system/std",
+    "pallet-balances/std",
+    "pallet-sudo/std",
+    "pallet-timestamp/std",
+    "peaq-pallet-did/std",
+    "scale-info/std",
+    "serde",
+    "sp-core/std",
+	"sp-io/std",
+	"sp-runtime/std",
+    "sp-std/std",
 ]
-runtime-benchmarks = ['frame-benchmarking/runtime-benchmarks']
-try-runtime = ['frame-support/try-runtime']
+runtime-benchmarks = ["frame-benchmarking/runtime-benchmarks"]
+try-runtime = ["frame-support/try-runtime"]
