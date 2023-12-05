@@ -1,6 +1,6 @@
 //! All pallet relevant structs are defined here
 
-use codec::{Decode, Encode, MaxEncodedLen};
+use parity_scale_codec::{Decode, Encode, MaxEncodedLen};
 use frame_support::traits::{
     tokens::Balance as BalanceT, Currency,
 };
@@ -8,6 +8,10 @@ use scale_info::TypeInfo;
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
 use sp_core::RuntimeDebug;
+use sp_runtime::{
+    Perbill,
+    traits::Zero,
+};
 
 /// Short form type definition to simplify method definition.
 pub type BalanceOf<T> =
@@ -63,3 +67,49 @@ impl<Balance: BalanceT> Default for MorConfig<Balance> {
         }
     }
 }
+
+// TO BE REMOVED WHEN MERGING PEAQ-FRAME-EXT AND THE CLAIM-MECHANISM!!!
+// This is a copy-paste-solution, to do a quick-fix/workarround. Not to be meant to implement this
+// here, it is part of the block-reward-pallet and shall be connected when merging all the changes
+// due to the claim-mechanism in PEAQ.
+#[derive(PartialEq, Eq, Clone, Encode, Default, Decode, RuntimeDebug, TypeInfo, MaxEncodedLen)]
+#[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
+pub struct DiscreteAverage<Balance>
+where
+	Balance: Zero + BalanceT,
+{
+	/// The average value.
+	pub avg: Balance,
+	/// Accumulator for building the next average value.
+	pub(crate) accu: Balance,
+	/// Number of blocks to averaged over.
+	pub(crate) n_period: u32,
+	/// Counter of blocks.
+	pub(crate) cnt: u32,
+}
+
+impl<Balance> DiscreteAverage<Balance>
+where
+	Balance: Zero + BalanceT,
+{
+	/// New type pattern.
+	pub fn new(avg: Balance, n_period: u32) -> DiscreteAverage<Balance> {
+		assert!(avg > Balance::zero());
+		DiscreteAverage { avg, accu: Balance::zero(), n_period, cnt: 0u32 }
+	}
+
+	/// Updates the average-value for a balance, shall be called each block.
+	pub fn update(&mut self, next: &Balance) {
+		self.accu += *next;
+		self.cnt += 1u32;
+		if self.cnt == self.n_period {
+			self.avg = Perbill::from_rational(1u32, self.n_period) * self.accu;
+			self.accu = Balance::zero();
+			self.cnt = 0u32;
+		}
+	}
+}
+
+// Short form for the DiscreteAverage<BalanceOf<T>, Count>
+pub(crate) type DiscAvg<T> = DiscreteAverage<BalanceOf<T>>;
+

@@ -148,6 +148,7 @@ mod tests;
 mod benchmarking;
 
 pub mod error;
+pub mod migrations;
 pub mod mor;
 pub mod types;
 
@@ -158,7 +159,6 @@ pub use weightinfo::WeightInfo;
 #[frame_support::pallet]
 pub mod pallet {
 
-    use core::cmp::Ordering;
     use frame_support::{
         pallet_prelude::*,
         traits::{
@@ -169,7 +169,6 @@ pub mod pallet {
     use frame_system::pallet_prelude::*;
     use sp_io::hashing::blake2_256;
     use sp_runtime::traits::{AccountIdConversion, One, Zero};
-    use sp_std::{vec, vec::Vec};
 
     use peaq_pallet_did::{did::Did, Pallet as DidPallet};
 
@@ -200,7 +199,7 @@ pub mod pallet {
         };
     }
 
-    const STORAGE_VERSION: StorageVersion = StorageVersion::new(2);
+    const STORAGE_VERSION: StorageVersion = StorageVersion::new(3);
 
     #[pallet::pallet]
     #[pallet::storage_version(STORAGE_VERSION)]
@@ -242,22 +241,12 @@ pub mod pallet {
     pub(super) type MachineRegister<T: Config> =
         StorageMap<_, Blake2_128Concat, [u8; 32], [u8; 32], ValueQuery>;
 
-    /// Storage for recording incoming block-rewards. Its purpose is to be able to
-    /// calculate the amount (sum) of all collected block-rewards within the defined
-    /// time period.
-    /// u8 stores the next Vec-index to be written over.
-    /// Vec of balances of collected block-rewards.
-    #[pallet::storage]
-    #[pallet::getter(fn rewards_record_of)]
-    pub(super) type RewardsRecordStorage<T: Config> =
-        StorageValue<_, (u8, Vec<BalanceOf<T>>), ValueQuery>;
-
     /// This storage is for the sum over collected block-rewards. This amount will be
     /// transfered to an owner's account, when he requests the online-reward for his
     /// macine.
     #[pallet::storage]
     #[pallet::getter(fn period_reward_of)]
-    pub(super) type PeriodRewardStorage<T: Config> = StorageValue<_, BalanceOf<T>, ValueQuery>;
+    pub(super) type AverageReferenceBalance<T: Config> = StorageValue<_, DiscAvg<T>, ValueQuery>;
 
     /// This storage hols the configuration of this pallet. About configurable
     /// parameters have a look at the MorConfig definition/description.
@@ -344,15 +333,7 @@ pub mod pallet {
     #[pallet::hooks]
     impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
         fn on_runtime_upgrade() -> frame_support::weights::Weight {
-            let mor_config = MorConfigStorage::<T>::get();
-            let reward_rec = RewardsRecordStorage::<T>::get();
-            if mor_config.track_n_block_rewards as usize != reward_rec.1.len() {
-                let mor_config = MorConfig::<BalanceOf<T>>::default();
-                Self::init_storages(&mor_config);
-                T::DbWeight::get().reads_writes(2, 3)
-            } else {
-                T::DbWeight::get().reads_writes(2, 0)
-            }
+            crate::migrations::on_runtime_upgrade::<T>()
         }
     }
 
@@ -432,9 +413,7 @@ pub mod pallet {
             ensure_root(origin)?;
 
             if config.is_consistent(T::ExistentialDeposit::get()) {
-                Self::resize_track_storage(config.track_n_block_rewards);
                 MorConfigStorage::<T>::put(config.clone());
-
                 Self::deposit_event(Event::<T>::MorConfigChanged(config));
                 Ok(())
             } else {
@@ -459,14 +438,8 @@ pub mod pallet {
     impl<T: Config> Pallet<T> {
         /// This method internally initialises the pallet's storages in dependency of the given MorConfig.
         pub(crate) fn init_storages(mor_config: &MorConfig<BalanceOf<T>>) {
-            let reward_record = (
-                0u8,
-                vec![BalanceOf::<T>::zero(); mor_config.track_n_block_rewards as usize],
-            );
-
             MorConfigStorage::<T>::put(mor_config.clone());
-            RewardsRecordStorage::<T>::put(reward_record);
-            PeriodRewardStorage::<T>::put(BalanceOf::<T>::zero());
+            AverageReferenceBalance::<T>::put(DiscAvg::<T>::new(BalanceOf::<T>::zero(), 7200));
         }
     }
 
@@ -494,47 +467,7 @@ pub mod pallet {
         }
 
         fn log_block_rewards(amount: BalanceOf<T>) {
-            let mor_config = MorConfigStorage::<T>::get();
-            let n_blocks = mor_config.track_n_block_rewards;
-
-            // RewardsRecordStorage: (u8, Vec<BalanceOf<T>>)
-            // (Next array-slot to write in, vector of imbalances)
-            let (mut slot_cnt, mut balances) = RewardsRecordStorage::<T>::get();
-            balances[slot_cnt as usize] = amount;
-            slot_cnt += 1;
-            if slot_cnt >= n_blocks {
-                slot_cnt = 0;
-            }
-
-            // PeriodRewardStorage: BalanceOf<T>
-            // Sum of last n_blocks block-rewards
-            let mut period_reward = BalanceOf::<T>::zero();
-            balances.iter().for_each(|&b| period_reward += b);
-
-            RewardsRecordStorage::<T>::set((slot_cnt, balances));
-            PeriodRewardStorage::<T>::set(period_reward);
-        }
-
-        fn resize_track_storage(new_size: u8) {
-            let new_size = new_size as usize;
-            let (_slot_cnt, mut balances) = RewardsRecordStorage::<T>::get();
-
-            let cur_size = balances.len();
-            match cur_size.cmp(&new_size) {
-                Ordering::Less => {
-                    balances.resize(new_size, BalanceOf::<T>::zero());
-                    let slot_cnt = cur_size as u8;
-                    assert!(balances.len() == new_size);
-                    RewardsRecordStorage::<T>::put((slot_cnt, balances));
-                }
-                Ordering::Greater => {
-                    let slot_cnt = 0u8;
-                    let balances = balances.split_off(cur_size - new_size);
-                    assert!(balances.len() == new_size);
-                    RewardsRecordStorage::<T>::put((slot_cnt, balances));
-                }
-                _ => {}
-            }
+            AverageReferenceBalance::<T>::mutate(|avg| avg.update(&amount));
         }
     }
 
@@ -572,7 +505,7 @@ pub mod pallet {
                 return Err(MorError::MorAuthorizationFailed);
             }
 
-            Ok(PeriodRewardStorage::<T>::get())
+            Ok(AverageReferenceBalance::<T>::get().avg)
         }
     }
 }
