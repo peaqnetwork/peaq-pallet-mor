@@ -163,6 +163,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
             machine_usage_fee_max: BalanceOf::<Test>::from(3_000_000_000_000_000_000u128),
             track_n_block_rewards: 10u8,
         },
+        initial_avg: BalanceOf::<Test>::from(1000_u128),
     }
     .assimilate_storage(&mut test_ext)
     .unwrap();

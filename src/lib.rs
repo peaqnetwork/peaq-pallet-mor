@@ -152,8 +152,8 @@ pub mod migrations;
 pub mod mor;
 pub mod types;
 
-pub mod weights;
 pub mod weightinfo;
+pub mod weights;
 pub use weightinfo::WeightInfo;
 
 #[frame_support::pallet]
@@ -310,7 +310,10 @@ pub mod pallet {
 
     #[pallet::genesis_config]
     pub struct GenesisConfig<T: Config> {
+        /// PeaqMor configuration, see module `types`
         pub mor_config: MorConfig<BalanceOf<T>>,
+        /// Initial average reward for `AverageReferenceBalance`
+        pub initial_avg: BalanceOf<T>,
     }
 
     #[cfg(feature = "std")]
@@ -318,6 +321,7 @@ pub mod pallet {
         fn default() -> Self {
             Self {
                 mor_config: MorConfig::<BalanceOf<T>>::default(),
+                initial_avg: BalanceOf::<T>::default(),
             }
         }
     }
@@ -326,7 +330,7 @@ pub mod pallet {
     impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
         fn build(&self) {
             assert!(self.mor_config.is_consistent(T::ExistentialDeposit::get()));
-            Pallet::<T>::init_storages(&self.mor_config);
+            Pallet::<T>::init_storages(&self.mor_config, &self.initial_avg);
         }
     }
 
@@ -437,9 +441,9 @@ pub mod pallet {
 
     impl<T: Config> Pallet<T> {
         /// This method internally initialises the pallet's storages in dependency of the given MorConfig.
-        pub(crate) fn init_storages(mor_config: &MorConfig<BalanceOf<T>>) {
+        pub(crate) fn init_storages(mor_config: &MorConfig<BalanceOf<T>>, init_avg: &BalanceOf<T>) {
             MorConfigStorage::<T>::put(mor_config.clone());
-            AverageReferenceBalance::<T>::put(DiscAvg::<T>::new(BalanceOf::<T>::zero(), 7200));
+            AverageReferenceBalance::<T>::put(DiscAvg::<T>::new(*init_avg, 7200));
         }
     }
 
