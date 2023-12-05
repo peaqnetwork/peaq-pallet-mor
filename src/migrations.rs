@@ -1,6 +1,7 @@
 //! Storage migrations for the peaq-pallet-mor.
 
 use frame_support::{pallet_prelude::*, storage_alias, weights::Weight};
+use sp_std::vec::Vec;
 
 use crate::{
     pallet::*,
