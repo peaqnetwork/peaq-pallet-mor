@@ -74,10 +74,15 @@ default-features = false
 git = "https://github.com/peaqnetwork/substrate"
 branch = "peaq-polkadot-v0.9.43"
 
+[dependencies.log]
+version = "0.4.17"
+default-features = false
+
 
 [features]
 default = ["std"]
 std = [
+	"log/std",
     "frame-benchmarking/std",
     "frame-support/std",
     "frame-system/std",

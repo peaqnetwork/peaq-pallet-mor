@@ -26,11 +26,18 @@ mod v2 {
             let on_chain_version = Pallet::<T>::on_chain_storage_version();
 
             if on_chain_version < this_version {
+                log::info!(
+                    "Migrating storage from version {:?} to version {:?}",
+                    on_chain_version,
+                    this_version
+                );
+                // Translate the reward_rec
                 let reward_rec = RewardsRecordStorage::<T>::get();
-                let mor_config = MorConfig::<BalanceOf<T>>::default();
+                let mor_config = MorConfigStorage::<T>::get();
                 // This part, we only need to check whether the data is set before
                 // Therefore, once it not setup, we should reset it
                 if mor_config.track_n_block_rewards as usize != reward_rec.1.len() {
+                    log::info!("Resetting storage");
                     let mor_config = MorConfig::<BalanceOf<T>>::default();
                     Pallet::<T>::init_storages(&mor_config);
                     weight_writes += 3;

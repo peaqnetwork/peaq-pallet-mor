@@ -159,8 +159,8 @@ pub use weightinfo::WeightInfo;
 #[frame_support::pallet]
 pub mod pallet {
 
-    use frame_support::{BoundedVec};
     use core::cmp::Ordering;
+    use frame_support::BoundedVec;
     use frame_support::{
         pallet_prelude::*,
         traits::{
@@ -171,7 +171,6 @@ pub mod pallet {
     use frame_system::pallet_prelude::*;
     use sp_io::hashing::blake2_256;
     use sp_runtime::traits::{AccountIdConversion, One, Zero};
-    use sp_std::{vec, vec::Vec};
 
     use peaq_pallet_did::{did::Did, Pallet as DidPallet};
 
@@ -458,10 +457,7 @@ pub mod pallet {
                 vec![BalanceOf::<T>::zero(); mor_config.track_n_block_rewards as usize]
                     .try_into()
                     .expect("bound checked in match arm condition; qed");
-            let reward_record = (
-                0u8,
-                yoyo,
-            );
+            let reward_record = (0u8, yoyo);
 
             MorConfigStorage::<T>::put(mor_config.clone());
             RewardsRecordStorage::<T>::put(reward_record);
@@ -524,7 +520,9 @@ pub mod pallet {
                 Ordering::Less => {
                     balances.resize(new_size, BalanceOf::<T>::zero());
                     let balances: BoundedVec<BalanceOf<T>, ConstU32<MAX_BLOCK_REWARD_NUM>> =
-                        balances.try_into().expect("bound checked in match arm condition; qed");
+                        balances
+                            .try_into()
+                            .expect("bound checked in match arm condition; qed");
                     let slot_cnt = cur_size as u8;
                     assert!(balances.len() == new_size);
                     RewardsRecordStorage::<T>::put((slot_cnt, balances));
@@ -533,7 +531,9 @@ pub mod pallet {
                     let slot_cnt = 0u8;
                     let balances = balances.split_off(cur_size - new_size);
                     let balances: BoundedVec<BalanceOf<T>, ConstU32<MAX_BLOCK_REWARD_NUM>> =
-                        balances.try_into().expect("bound checked in match arm condition; qed");
+                        balances
+                            .try_into()
+                            .expect("bound checked in match arm condition; qed");
                     assert!(balances.len() == new_size);
                     RewardsRecordStorage::<T>::put((slot_cnt, balances));
                 }
