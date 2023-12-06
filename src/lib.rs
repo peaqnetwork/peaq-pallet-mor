@@ -171,6 +171,7 @@ pub mod pallet {
     use frame_system::pallet_prelude::*;
     use sp_io::hashing::blake2_256;
     use sp_runtime::traits::{AccountIdConversion, One, Zero};
+    use sp_std::vec;
 
     use peaq_pallet_did::{did::Did, Pallet as DidPallet};
 
