@@ -148,16 +148,18 @@ mod tests;
 mod benchmarking;
 
 pub mod error;
+pub mod migrations;
 pub mod mor;
 pub mod types;
 
-pub mod weights;
 pub mod weightinfo;
+pub mod weights;
 pub use weightinfo::WeightInfo;
 
 #[frame_support::pallet]
 pub mod pallet {
 
+    use frame_support::{BoundedVec};
     use core::cmp::Ordering;
     use frame_support::{
         pallet_prelude::*,
@@ -200,8 +202,11 @@ pub mod pallet {
         };
     }
 
+    const MAX_BLOCK_REWARD_NUM: u32 = u8::MAX as u32;
+    pub const STORAGE_VERSION: StorageVersion = StorageVersion::new(3);
+
     #[pallet::pallet]
-    #[pallet::without_storage_info]
+    #[pallet::storage_version(STORAGE_VERSION)]
     pub struct Pallet<T>(_);
 
     /// Configuration trait of this pallet.
@@ -248,7 +253,7 @@ pub mod pallet {
     #[pallet::storage]
     #[pallet::getter(fn rewards_record_of)]
     pub(super) type RewardsRecordStorage<T: Config> =
-        StorageValue<_, (u8, Vec<BalanceOf<T>>), ValueQuery>;
+        StorageValue<_, (u8, BoundedVec<BalanceOf<T>, ConstU32<MAX_BLOCK_REWARD_NUM>>), ValueQuery>;
 
     /// This storage is for the sum over collected block-rewards. This amount will be
     /// transfered to an owner's account, when he requests the online-reward for his
@@ -342,15 +347,7 @@ pub mod pallet {
     #[pallet::hooks]
     impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
         fn on_runtime_upgrade() -> frame_support::weights::Weight {
-            let mor_config = MorConfigStorage::<T>::get();
-            let reward_rec = RewardsRecordStorage::<T>::get();
-            if mor_config.track_n_block_rewards as usize != reward_rec.1.len() {
-                let mor_config = MorConfig::<BalanceOf<T>>::default();
-                Self::init_storages(&mor_config);
-                T::DbWeight::get().reads_writes(2, 3)
-            } else {
-                T::DbWeight::get().reads_writes(2, 0)
-            }
+            crate::migrations::on_runtime_upgrade::<T>()
         }
     }
 
@@ -457,9 +454,13 @@ pub mod pallet {
     impl<T: Config> Pallet<T> {
         /// This method internally initialises the pallet's storages in dependency of the given MorConfig.
         pub(crate) fn init_storages(mor_config: &MorConfig<BalanceOf<T>>) {
+            let yoyo: BoundedVec<BalanceOf<T>, ConstU32<MAX_BLOCK_REWARD_NUM>> =
+                vec![BalanceOf::<T>::zero(); mor_config.track_n_block_rewards as usize]
+                    .try_into()
+                    .expect("bound checked in match arm condition; qed");
             let reward_record = (
                 0u8,
-                vec![BalanceOf::<T>::zero(); mor_config.track_n_block_rewards as usize],
+                yoyo,
             );
 
             MorConfigStorage::<T>::put(mor_config.clone());
@@ -515,12 +516,15 @@ pub mod pallet {
 
         fn resize_track_storage(new_size: u8) {
             let new_size = new_size as usize;
-            let (_slot_cnt, mut balances) = RewardsRecordStorage::<T>::get();
+            let (_slot_cnt, balances) = RewardsRecordStorage::<T>::get();
+            let mut balances = balances.to_vec();
 
             let cur_size = balances.len();
             match cur_size.cmp(&new_size) {
                 Ordering::Less => {
                     balances.resize(new_size, BalanceOf::<T>::zero());
+                    let balances: BoundedVec<BalanceOf<T>, ConstU32<MAX_BLOCK_REWARD_NUM>> =
+                        balances.try_into().expect("bound checked in match arm condition; qed");
                     let slot_cnt = cur_size as u8;
                     assert!(balances.len() == new_size);
                     RewardsRecordStorage::<T>::put((slot_cnt, balances));
@@ -528,6 +532,8 @@ pub mod pallet {
                 Ordering::Greater => {
                     let slot_cnt = 0u8;
                     let balances = balances.split_off(cur_size - new_size);
+                    let balances: BoundedVec<BalanceOf<T>, ConstU32<MAX_BLOCK_REWARD_NUM>> =
+                        balances.try_into().expect("bound checked in match arm condition; qed");
                     assert!(balances.len() == new_size);
                     RewardsRecordStorage::<T>::put((slot_cnt, balances));
                 }

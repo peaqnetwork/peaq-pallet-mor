@@ -17,10 +17,9 @@ pallet-balances = { git = "https://github.com/peaqnetwork/substrate", branch = "
 pallet-sudo = { git = "https://github.com/peaqnetwork/substrate", branch = "peaq-polkadot-v0.9.43", default-features = false }
 pallet-timestamp = { git = "https://github.com/peaqnetwork/substrate", branch = "peaq-polkadot-v0.9.43", default-features = false }
 
-[dependencies.codec]
+[dependencies.parity-scale-codec]
 default-features = false
 features = ["derive"]
-package = "parity-scale-codec"
 version = "3.2.2"
 
 [dependencies.frame-benchmarking]
@@ -79,13 +78,13 @@ branch = "peaq-polkadot-v0.9.43"
 [features]
 default = ["std"]
 std = [
-    "codec/std",
     "frame-benchmarking/std",
     "frame-support/std",
     "frame-system/std",
     "pallet-balances/std",
     "pallet-sudo/std",
     "pallet-timestamp/std",
+    "parity-scale-codec/std",
     "peaq-pallet-did/std",
     "scale-info/std",
     "serde",
