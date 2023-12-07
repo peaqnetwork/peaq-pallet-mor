@@ -148,17 +148,19 @@ mod tests;
 mod benchmarking;
 
 pub mod error;
+pub mod migrations;
 pub mod mor;
 pub mod types;
 
-pub mod weights;
 pub mod weightinfo;
+pub mod weights;
 pub use weightinfo::WeightInfo;
 
 #[frame_support::pallet]
 pub mod pallet {
 
     use core::cmp::Ordering;
+    use frame_support::BoundedVec;
     use frame_support::{
         pallet_prelude::*,
         traits::{
@@ -169,7 +171,7 @@ pub mod pallet {
     use frame_system::pallet_prelude::*;
     use sp_io::hashing::blake2_256;
     use sp_runtime::traits::{AccountIdConversion, One, Zero};
-    use sp_std::{vec, vec::Vec};
+    use sp_std::vec;
 
     use peaq_pallet_did::{did::Did, Pallet as DidPallet};
 
@@ -181,6 +183,7 @@ pub mod pallet {
                 DidAuthorizationFailed, InsufficientTokensInPot, MachineAlreadyRegistered,
                 MachineNotRegistered, MachinePaymentOutOfRange, MorAuthorizationFailed,
                 MorConfigIsNotConsistent, TokensCouldNotBeTransfered, UnexpectedDidError,
+                UnknownError,
             },
             MorResult,
         },
@@ -200,8 +203,11 @@ pub mod pallet {
         };
     }
 
+    const MAX_BLOCK_REWARD_NUM: u32 = u8::MAX as u32;
+    pub const STORAGE_VERSION: StorageVersion = StorageVersion::new(3);
+
     #[pallet::pallet]
-    #[pallet::without_storage_info]
+    #[pallet::storage_version(STORAGE_VERSION)]
     pub struct Pallet<T>(_);
 
     /// Configuration trait of this pallet.
@@ -248,7 +254,7 @@ pub mod pallet {
     #[pallet::storage]
     #[pallet::getter(fn rewards_record_of)]
     pub(super) type RewardsRecordStorage<T: Config> =
-        StorageValue<_, (u8, Vec<BalanceOf<T>>), ValueQuery>;
+        StorageValue<_, (u8, BoundedVec<BalanceOf<T>, ConstU32<MAX_BLOCK_REWARD_NUM>>), ValueQuery>;
 
     /// This storage is for the sum over collected block-rewards. This amount will be
     /// transfered to an owner's account, when he requests the online-reward for his
@@ -299,6 +305,7 @@ pub mod pallet {
         MorConfigIsNotConsistent,
         TokensCouldNotBeTransfered,
         UnexpectedDidError,
+        UnknownError,
     }
 
     impl<T: Config> Error<T> {
@@ -313,6 +320,7 @@ pub mod pallet {
                 MorConfigIsNotConsistent => Error::<T>::MorConfigIsNotConsistent.into(),
                 TokensCouldNotBeTransfered => Error::<T>::TokensCouldNotBeTransfered.into(),
                 UnexpectedDidError => Error::<T>::UnexpectedDidError.into(),
+                UnknownError => Error::<T>::UnknownError.into(),
             }
         }
     }
@@ -342,15 +350,7 @@ pub mod pallet {
     #[pallet::hooks]
     impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
         fn on_runtime_upgrade() -> frame_support::weights::Weight {
-            let mor_config = MorConfigStorage::<T>::get();
-            let reward_rec = RewardsRecordStorage::<T>::get();
-            if mor_config.track_n_block_rewards as usize != reward_rec.1.len() {
-                let mor_config = MorConfig::<BalanceOf<T>>::default();
-                Self::init_storages(&mor_config);
-                T::DbWeight::get().reads_writes(2, 3)
-            } else {
-                T::DbWeight::get().reads_writes(2, 0)
-            }
+            crate::migrations::on_runtime_upgrade::<T>()
         }
     }
 
@@ -430,7 +430,8 @@ pub mod pallet {
             ensure_root(origin)?;
 
             if config.is_consistent(T::ExistentialDeposit::get()) {
-                Self::resize_track_storage(config.track_n_block_rewards);
+                Self::resize_track_storage(config.track_n_block_rewards)
+                    .map_err(Error::<T>::from_mor)?;
                 MorConfigStorage::<T>::put(config.clone());
 
                 Self::deposit_event(Event::<T>::MorConfigChanged(config));
@@ -457,10 +458,11 @@ pub mod pallet {
     impl<T: Config> Pallet<T> {
         /// This method internally initialises the pallet's storages in dependency of the given MorConfig.
         pub(crate) fn init_storages(mor_config: &MorConfig<BalanceOf<T>>) {
-            let reward_record = (
-                0u8,
-                vec![BalanceOf::<T>::zero(); mor_config.track_n_block_rewards as usize],
-            );
+            let record_list: BoundedVec<BalanceOf<T>, ConstU32<MAX_BLOCK_REWARD_NUM>> =
+                vec![BalanceOf::<T>::zero(); mor_config.track_n_block_rewards as usize]
+                    .try_into()
+                    .expect("bound checked in match arm condition; qed");
+            let reward_record = (0u8, record_list);
 
             MorConfigStorage::<T>::put(mor_config.clone());
             RewardsRecordStorage::<T>::put(reward_record);
@@ -513,26 +515,54 @@ pub mod pallet {
             PeriodRewardStorage::<T>::set(period_reward);
         }
 
-        fn resize_track_storage(new_size: u8) {
+        // Use more defensive approach here, because this method is called by the runtime
+        // But the Vec to boundedVec conversion shouldn't fail, because the Vec is created by boundedVec
+        fn resize_track_storage(new_size: u8) -> MorResult<()> {
             let new_size = new_size as usize;
-            let (_slot_cnt, mut balances) = RewardsRecordStorage::<T>::get();
+            let (_slot_cnt, balances) = RewardsRecordStorage::<T>::get();
+            let mut balances = balances.to_vec();
 
             let cur_size = balances.len();
             match cur_size.cmp(&new_size) {
                 Ordering::Less => {
                     balances.resize(new_size, BalanceOf::<T>::zero());
+                    let balances: BoundedVec<BalanceOf<T>, ConstU32<MAX_BLOCK_REWARD_NUM>> =
+                        balances.try_into().map_err(|_| {
+                            log::error!("conversion error");
+                            MorError::UnknownError
+                        })?;
                     let slot_cnt = cur_size as u8;
-                    assert!(balances.len() == new_size);
+                    if balances.len() != new_size {
+                        log::error!(
+                            "resize error: len: {}, new_size: {}",
+                            balances.len(),
+                            new_size
+                        );
+                        return Err(MorError::UnknownError);
+                    }
                     RewardsRecordStorage::<T>::put((slot_cnt, balances));
                 }
                 Ordering::Greater => {
                     let slot_cnt = 0u8;
                     let balances = balances.split_off(cur_size - new_size);
-                    assert!(balances.len() == new_size);
+                    let balances: BoundedVec<BalanceOf<T>, ConstU32<MAX_BLOCK_REWARD_NUM>> =
+                        balances.try_into().map_err(|_| {
+                            log::error!("conversion error");
+                            MorError::UnknownError
+                        })?;
+                    if balances.len() != new_size {
+                        log::error!(
+                            "resize error: len: {}, new_size: {}",
+                            balances.len(),
+                            new_size
+                        );
+                        return Err(MorError::UnknownError);
+                    }
                     RewardsRecordStorage::<T>::put((slot_cnt, balances));
                 }
                 _ => {}
             }
+            Ok(())
         }
     }
 

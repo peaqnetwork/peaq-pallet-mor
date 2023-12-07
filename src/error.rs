@@ -1,6 +1,6 @@
 //! Encapsules all error types and relevant methods of this pallet.
 
-use codec::{Decode, Encode};
+use parity_scale_codec::{Decode, Encode};
 use peaq_pallet_did::did::DidError;
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
@@ -36,6 +36,8 @@ pub enum MorError {
     /// Sent when an unexpected Peaq-DID error occurs. This means, return
     /// to developer of the Peaq-MOR pallet.
     UnexpectedDidError,
+    /// Internal error happened
+    UnknownError,
 }
 
 impl From<DidError> for MorError {
