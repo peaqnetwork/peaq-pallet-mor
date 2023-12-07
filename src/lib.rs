@@ -183,6 +183,7 @@ pub mod pallet {
                 DidAuthorizationFailed, InsufficientTokensInPot, MachineAlreadyRegistered,
                 MachineNotRegistered, MachinePaymentOutOfRange, MorAuthorizationFailed,
                 MorConfigIsNotConsistent, TokensCouldNotBeTransfered, UnexpectedDidError,
+                UnknownError,
             },
             MorResult,
         },
@@ -304,6 +305,7 @@ pub mod pallet {
         MorConfigIsNotConsistent,
         TokensCouldNotBeTransfered,
         UnexpectedDidError,
+        UnknownError,
     }
 
     impl<T: Config> Error<T> {
@@ -318,6 +320,7 @@ pub mod pallet {
                 MorConfigIsNotConsistent => Error::<T>::MorConfigIsNotConsistent.into(),
                 TokensCouldNotBeTransfered => Error::<T>::TokensCouldNotBeTransfered.into(),
                 UnexpectedDidError => Error::<T>::UnexpectedDidError.into(),
+                UnknownError => Error::<T>::UnknownError.into(),
             }
         }
     }
@@ -427,7 +430,8 @@ pub mod pallet {
             ensure_root(origin)?;
 
             if config.is_consistent(T::ExistentialDeposit::get()) {
-                Self::resize_track_storage(config.track_n_block_rewards);
+                Self::resize_track_storage(config.track_n_block_rewards)
+                    .map_err(Error::<T>::from_mor)?;
                 MorConfigStorage::<T>::put(config.clone());
 
                 Self::deposit_event(Event::<T>::MorConfigChanged(config));
@@ -454,11 +458,11 @@ pub mod pallet {
     impl<T: Config> Pallet<T> {
         /// This method internally initialises the pallet's storages in dependency of the given MorConfig.
         pub(crate) fn init_storages(mor_config: &MorConfig<BalanceOf<T>>) {
-            let yoyo: BoundedVec<BalanceOf<T>, ConstU32<MAX_BLOCK_REWARD_NUM>> =
+            let record_list: BoundedVec<BalanceOf<T>, ConstU32<MAX_BLOCK_REWARD_NUM>> =
                 vec![BalanceOf::<T>::zero(); mor_config.track_n_block_rewards as usize]
                     .try_into()
                     .expect("bound checked in match arm condition; qed");
-            let reward_record = (0u8, yoyo);
+            let reward_record = (0u8, record_list);
 
             MorConfigStorage::<T>::put(mor_config.clone());
             RewardsRecordStorage::<T>::put(reward_record);
@@ -511,7 +515,9 @@ pub mod pallet {
             PeriodRewardStorage::<T>::set(period_reward);
         }
 
-        fn resize_track_storage(new_size: u8) {
+        // Use more defensive approach here, because this method is called by the runtime
+        // But the Vec to boundedVec conversion shouldn't fail, because the Vec is created by boundedVec
+        fn resize_track_storage(new_size: u8) -> MorResult<()> {
             let new_size = new_size as usize;
             let (_slot_cnt, balances) = RewardsRecordStorage::<T>::get();
             let mut balances = balances.to_vec();
@@ -521,25 +527,42 @@ pub mod pallet {
                 Ordering::Less => {
                     balances.resize(new_size, BalanceOf::<T>::zero());
                     let balances: BoundedVec<BalanceOf<T>, ConstU32<MAX_BLOCK_REWARD_NUM>> =
-                        balances
-                            .try_into()
-                            .expect("bound checked in match arm condition; qed");
+                        balances.try_into().map_err(|_| {
+                            log::error!("conversion error");
+                            MorError::UnknownError
+                        })?;
                     let slot_cnt = cur_size as u8;
-                    assert!(balances.len() == new_size);
+                    if balances.len() != new_size {
+                        log::error!(
+                            "resize error: len: {}, new_size: {}",
+                            balances.len(),
+                            new_size
+                        );
+                        return Err(MorError::UnknownError);
+                    }
                     RewardsRecordStorage::<T>::put((slot_cnt, balances));
                 }
                 Ordering::Greater => {
                     let slot_cnt = 0u8;
                     let balances = balances.split_off(cur_size - new_size);
                     let balances: BoundedVec<BalanceOf<T>, ConstU32<MAX_BLOCK_REWARD_NUM>> =
-                        balances
-                            .try_into()
-                            .expect("bound checked in match arm condition; qed");
-                    assert!(balances.len() == new_size);
+                        balances.try_into().map_err(|_| {
+                            log::error!("conversion error");
+                            MorError::UnknownError
+                        })?;
+                    if balances.len() != new_size {
+                        log::error!(
+                            "resize error: len: {}, new_size: {}",
+                            balances.len(),
+                            new_size
+                        );
+                        return Err(MorError::UnknownError);
+                    }
                     RewardsRecordStorage::<T>::put((slot_cnt, balances));
                 }
                 _ => {}
             }
+            Ok(())
         }
     }
 

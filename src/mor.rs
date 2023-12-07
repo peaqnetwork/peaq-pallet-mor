@@ -22,7 +22,7 @@ pub trait MorBalance<AccountId, Balance> {
 
     /// When the configuration of the pallet will be changed, the storage size changes
     /// too. This method will reorganize the storage of the pallet and adapt its content.
-    fn resize_track_storage(new_size: u8);
+    fn resize_track_storage(new_size: u8) -> MorResult<()>;
 }
 
 /// The trait `MorMachine` encapsules adminstrative methods related to machines.
