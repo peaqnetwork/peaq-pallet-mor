@@ -6,39 +6,31 @@ pub use crate::{
 };
 
 use frame_benchmarking::account;
-#[cfg(feature = "std")]
-use frame_support::traits::GenesisBuild;
 use frame_support::{construct_runtime, parameter_types, PalletId};
 use frame_system;
 use pallet_balances;
 use pallet_timestamp;
 use sp_core::{sr25519, H256};
 use sp_io;
-use sp_runtime::{
-    testing::Header,
-    traits::{AccountIdConversion, BlakeTwo256, IdentityLookup},
-};
-use sp_std::{boxed::Box, vec, vec::Vec};
+use sp_runtime::traits::{AccountIdConversion, BlakeTwo256, IdentityLookup};
+use sp_runtime::BuildStorage;
+use sp_std::{boxed::Box, vec};
 
 // system
 pub type Block = frame_system::mocking::MockBlock<Test>;
-pub type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 // pallet-balances
 pub type BalancesType = u128;
 
 // Configure a mock runtime to test the pallet.
 construct_runtime!(
-    pub enum Test where
-        Block = Block,
-        NodeBlock = Block,
-        UncheckedExtrinsic = UncheckedExtrinsic,
+    pub enum Test
     {
-        System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
-        Sudo: pallet_sudo::{Pallet, Call, Config<T>, Storage, Event<T>},
-        Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent},
-        Balances: pallet_balances::{Pallet, Call, Config<T>, Storage, Event<T>},
-        PeaqDid: peaq_pallet_did::{Pallet, Call, Storage, Event<T>},
-        PeaqMor: peaq_pallet_mor::{Pallet, Call, Config<T>, Storage, Event<T>},
+        System: frame_system,
+        Sudo: pallet_sudo,
+        Timestamp: pallet_timestamp,
+        Balances: pallet_balances,
+        PeaqDid: peaq_pallet_did,
+        PeaqMor: peaq_pallet_mor,
     }
 );
 
@@ -60,15 +52,14 @@ impl frame_system::Config for Test {
     type BlockWeights = ();
     type BlockLength = ();
     type DbWeight = ();
+    type Nonce = u64;
+    type Block = Block;
     type RuntimeOrigin = RuntimeOrigin;
     type RuntimeCall = RuntimeCall;
-    type Index = u64;
-    type BlockNumber = u64;
     type Hash = H256;
     type Hashing = BlakeTwo256;
     type AccountId = sr25519::Public;
     type Lookup = IdentityLookup<Self::AccountId>;
-    type Header = Header;
     type RuntimeEvent = RuntimeEvent;
     type BlockHashCount = BlockHashCount;
     type Version = ();
@@ -105,10 +96,10 @@ impl pallet_balances::Config for Test {
     type ExistentialDeposit = ExistentialDeposit;
     type AccountStore = System;
     type WeightInfo = ();
-    type HoldIdentifier = ();
     type FreezeIdentifier = ();
     type MaxHolds = ();
     type MaxFreezes = ();
+    type RuntimeHoldReason = ();
 }
 
 impl peaq_pallet_did::Config for Test {
@@ -135,8 +126,8 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
     let mor_pot = PotId::get().into_account_truncating();
 
     // setup genesis configuration details
-    let mut test_ext = frame_system::GenesisConfig::default()
-        .build_storage::<Test>()
+    let mut test_ext = frame_system::GenesisConfig::<Test>::default()
+        .build_storage()
         .unwrap();
 
     pallet_sudo::GenesisConfig::<Test> {
