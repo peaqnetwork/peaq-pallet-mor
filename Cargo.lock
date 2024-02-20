@@ -2199,7 +2199,7 @@ dependencies = [
 
 [[package]]
 name = "peaq-pallet-mor"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -2217,7 +2217,6 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std",
- "zerocopy",
 ]
 
 [[package]]
@@ -4138,7 +4137,6 @@ version = "0.7.32"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "74d4d3961e53fa4c9a25a8637fc2bfaf2595b3d3ae34875568a5cf64787716be"
 dependencies = [
- "byteorder",
  "zerocopy-derive",
 ]
 
