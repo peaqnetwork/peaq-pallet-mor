@@ -32,7 +32,6 @@ sp-runtime = { default-features = false, git = "https://github.com/peaqnetwork/p
 sp-std = { default-features = false, git = "https://github.com/peaqnetwork/polkadot-sdk", branch = "release-polkadot-v1.1.0" }
 log = { version = "0.4.17", default-features = false }
 num-traits = { version = "0.2.18", default-features = false }
-zerocopy = "0.7.31"
 
 [features]
 default = ["std"]
