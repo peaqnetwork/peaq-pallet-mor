@@ -3,7 +3,6 @@
 use frame_support::traits::{tokens::Balance as BalanceT, Currency};
 use parity_scale_codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
-#[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
 use sp_core::RuntimeDebug;
 
@@ -16,8 +15,7 @@ pub type WeightOf<T> = <T as crate::Config>::WeightInfo;
 
 /// This struct defines the configurable paramters of the Peaq-MOR pallet. All contained
 /// parameters can be configured by a dispatchable function (extrinsic).
-#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
-#[derive(PartialEq, Eq, Clone, Encode, Decode, RuntimeDebug, TypeInfo, MaxEncodedLen)]
+#[derive(PartialEq, Eq, Clone, Encode, Decode, RuntimeDebug, TypeInfo, MaxEncodedLen, Serialize, Deserialize)]
 pub struct MorConfig<Balance>
 where
     Balance: BalanceT + MaxEncodedLen,
