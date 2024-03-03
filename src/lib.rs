@@ -330,7 +330,6 @@ pub mod pallet {
         pub mor_config: MorConfig<BalanceOf<T>>,
     }
 
-    #[cfg(feature = "std")]
     impl<T: Config> Default for GenesisConfig<T> {
         fn default() -> Self {
             Self {
