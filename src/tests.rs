@@ -7,6 +7,7 @@ use crate::{
     Error,
 };
 use frame_support::{assert_noop, assert_ok};
+use sp_core::bounded_vec::BoundedVec;
 use sp_core::sr25519::Public;
 use sp_runtime::traits::BadOrigin;
 
@@ -16,8 +17,8 @@ fn register_machine_did(owner: Public, machine: Public) {
     assert_ok!(PeaqDid::add_attribute(
         RuntimeOrigin::signed(owner),
         machine,
-        M_ATTR.to_vec(),
-        M_VAL.to_vec(),
+        BoundedVec::try_from(M_ATTR.to_vec()).unwrap(),
+        BoundedVec::try_from(M_VAL.to_vec()).unwrap(),
         None
     ));
 }
