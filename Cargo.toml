@@ -42,7 +42,7 @@ branch = "peaq-polkadot-v0.9.43"
 [dependencies.peaq-pallet-did]
 default-features = false
 git = "https://github.com/peaqnetwork/peaq-pallet-did"
-branch = "dev"
+branch = "security-auditing-issue/1207229965380414_missing-storage-deposits"
 
 [dependencies.scale-info]
 default-features = false
