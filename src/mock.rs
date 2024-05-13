@@ -111,10 +111,20 @@ impl pallet_balances::Config for Test {
     type MaxFreezes = ();
 }
 
+parameter_types! {
+    pub const StorageDepositBase: BalancesType = 100;
+    pub const StorageDepositPerByte: BalancesType = 1;
+    pub const BoundedDataLen: u32 = 2552;
+}
+
 impl peaq_pallet_did::Config for Test {
     type RuntimeEvent = RuntimeEvent;
     type Time = pallet_timestamp::Pallet<Test>;
     type WeightInfo = peaq_pallet_did::weights::WeightInfo<Test>;
+    type BoundedDataLen = BoundedDataLen;
+    type StorageDepositBase = StorageDepositBase;
+    type StorageDepositPerByte = StorageDepositPerByte;
+    type Currency = Balances;
 }
 
 impl peaq_pallet_mor::Config for Test {

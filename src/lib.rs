@@ -448,7 +448,7 @@ pub mod pallet {
             ensure_root(origin)?;
 
             let pot: T::AccountId = T::PotId::get().into_account_truncating();
-            let amount = T::Currency::free_balance(&pot);
+            let amount = <T as Config>::Currency::free_balance(&pot);
 
             Self::deposit_event(Event::<T>::FetchedPotBalance(amount));
             Ok(())
@@ -473,11 +473,11 @@ pub mod pallet {
     // See MorBalance trait definition for further details
     impl<T: Config> MorBalance<T::AccountId, BalanceOf<T>> for Pallet<T> {
         fn mint_to_account(account: &T::AccountId, amount: BalanceOf<T>) -> DispatchResult {
-            let imbalance = T::Currency::issue(amount);
+            let imbalance = <T as Config>::Currency::issue(amount);
 
             let amount = imbalance.peek();
 
-            let imbalance = T::Currency::deposit_creating(account, amount);
+            let imbalance = <T as Config>::Currency::deposit_creating(account, amount);
             Self::deposit_event(Event::<T>::MintedTokens(imbalance.peek()));
             Ok(())
         }
@@ -485,8 +485,13 @@ pub mod pallet {
         fn transfer_from_pot(account: &T::AccountId, amount: BalanceOf<T>) -> DispatchResult {
             let pot: T::AccountId = T::PotId::get().into_account_truncating();
 
-            if T::Currency::free_balance(&pot) >= amount {
-                T::Currency::transfer(&pot, account, amount, ExistenceRequirement::KeepAlive)?;
+            if <T as Config>::Currency::free_balance(&pot) >= amount {
+                <T as Config>::Currency::transfer(
+                    &pot,
+                    account,
+                    amount,
+                    ExistenceRequirement::KeepAlive,
+                )?;
                 Ok(())
             } else {
                 Err(Error::<T>::from_mor(InsufficientTokensInPot))

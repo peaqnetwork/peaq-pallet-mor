@@ -10,8 +10,8 @@ use crate::{
 use frame_benchmarking::v1::{account, benchmarks, impl_benchmark_test_suite};
 use frame_system::{Pallet as System, RawOrigin};
 use peaq_pallet_did::Pallet as PeaqDid;
-use sp_runtime::BoundedVec;
 use sp_runtime::traits::Zero;
+use sp_runtime::BoundedVec;
 
 /// Assert that the last event equals the provided one.
 fn assert_last_event<T: Config>(generic_event: <T as Config>::RuntimeEvent) {
