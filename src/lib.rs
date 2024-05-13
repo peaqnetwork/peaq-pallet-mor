@@ -486,7 +486,12 @@ pub mod pallet {
             let pot: T::AccountId = T::PotId::get().into_account_truncating();
 
             if <T as Config>::Currency::free_balance(&pot) >= amount {
-                <T as Config>::Currency::transfer(&pot, account, amount, ExistenceRequirement::KeepAlive)?;
+                <T as Config>::Currency::transfer(
+                    &pot,
+                    account,
+                    amount,
+                    ExistenceRequirement::KeepAlive,
+                )?;
                 Ok(())
             } else {
                 Err(Error::<T>::from_mor(InsufficientTokensInPot))

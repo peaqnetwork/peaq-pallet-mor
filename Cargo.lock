@@ -1753,13 +1753,12 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-did"
 version = "0.1.0"
-source = "git+https://github.com/peaqnetwork/peaq-pallet-did?branch=security-auditing-issue/1207229965380414_missing-storage-deposits#fe27019aef8752ebb02c34cf7ed2084afe5cc65e"
+source = "git+https://github.com/peaqnetwork/peaq-pallet-did?branch=dev#e3a2e85d5d1b8b772495bbe80e4d221d692a6bc5"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
  "num-traits",
- "pallet-balances",
  "pallet-timestamp",
  "parity-scale-codec",
  "scale-info",
