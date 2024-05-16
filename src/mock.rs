@@ -53,6 +53,7 @@ parameter_types! {
     // pallet_balances
     pub const ExistentialDeposit: u128 = 500;
     pub const MaxLocks: u32 = 50;
+    pub const MaxReserve: u32 = 50;
 }
 
 impl frame_system::Config for Test {
@@ -97,7 +98,7 @@ impl pallet_timestamp::Config for Test {
 
 impl pallet_balances::Config for Test {
     type MaxLocks = MaxLocks;
-    type MaxReserves = ();
+    type MaxReserves = MaxReserve;
     type ReserveIdentifier = [u8; 8];
     type Balance = BalancesType;
     type RuntimeEvent = RuntimeEvent;
@@ -115,6 +116,7 @@ parameter_types! {
     pub const StorageDepositBase: BalancesType = 100;
     pub const StorageDepositPerByte: BalancesType = 1;
     pub const BoundedDataLen: u32 = 2552;
+    pub const DIDReserveIdentifier: [u8; 8] = [b'p', b'e', b'a', b'q', b'_', b'd', b'i', b'd'];
 }
 
 impl peaq_pallet_did::Config for Test {
@@ -125,6 +127,7 @@ impl peaq_pallet_did::Config for Test {
     type StorageDepositBase = StorageDepositBase;
     type StorageDepositPerByte = StorageDepositPerByte;
     type Currency = Balances;
+    type ReserveIdentifier = DIDReserveIdentifier;
 }
 
 impl peaq_pallet_mor::Config for Test {
