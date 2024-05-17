@@ -1753,7 +1753,7 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-did"
 version = "0.1.0"
-source = "git+https://github.com/peaqnetwork/peaq-pallet-did?branch=dev#93f451707c374e5483e87b20527bf4f2a1252f21"
+source = "git+https://github.com/peaqnetwork/peaq-pallet-did?branch=dev#922d98fb17193a4a3ba7287a1be55ad3a48264d2"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
