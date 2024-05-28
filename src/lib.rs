@@ -204,6 +204,8 @@ pub mod pallet {
     }
 
     const MAX_BLOCK_REWARD_NUM: u32 = u8::MAX as u32;
+
+    const DID_NAME_ATTRIBUTE: &[u8] = b"peaq-console";
     pub const STORAGE_VERSION: StorageVersion = StorageVersion::new(3);
 
     #[pallet::pallet]
@@ -578,7 +580,7 @@ pub mod pallet {
             machine: &T::AccountId,
         ) -> MorResult<BalanceOf<T>> {
             // Registered in Peaq-DID and is this the owner?
-            DidPallet::<T>::is_owner(owner, machine).map_err(MorError::from)?;
+            DidPallet::<T>::is_owner(owner, machine, DID_NAME_ATTRIBUTE).map_err(MorError::from)?;
 
             let machine_hash = (machine).using_encoded(blake2_256);
             if MachineRegister::<T>::contains_key(machine_hash) {
@@ -594,7 +596,7 @@ pub mod pallet {
 
         fn reward_machine(owner: &T::AccountId, machine: &T::AccountId) -> MorResult<BalanceOf<T>> {
             // Is still registered in Peaq-DID and is this the owner?
-            DidPallet::<T>::is_owner(owner, machine).map_err(MorError::from)?;
+            DidPallet::<T>::is_owner(owner, machine, DID_NAME_ATTRIBUTE).map_err(MorError::from)?;
             // Is machine registered in Peaq-MOR?
             let machine_hash = (machine).using_encoded(blake2_256);
             if !MachineRegister::<T>::contains_key(machine_hash) {
