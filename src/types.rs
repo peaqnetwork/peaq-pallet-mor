@@ -15,7 +15,18 @@ pub type WeightOf<T> = <T as crate::Config>::WeightInfo;
 
 /// This struct defines the configurable paramters of the Peaq-MOR pallet. All contained
 /// parameters can be configured by a dispatchable function (extrinsic).
-#[derive(PartialEq, Eq, Clone, Encode, Decode, RuntimeDebug, TypeInfo, MaxEncodedLen, Serialize, Deserialize)]
+#[derive(
+    PartialEq,
+    Eq,
+    Clone,
+    Encode,
+    Decode,
+    RuntimeDebug,
+    TypeInfo,
+    MaxEncodedLen,
+    Serialize,
+    Deserialize,
+)]
 pub struct MorConfig<Balance>
 where
     Balance: BalanceT + MaxEncodedLen,
