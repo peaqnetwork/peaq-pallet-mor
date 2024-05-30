@@ -2180,13 +2180,14 @@ dependencies = [
 
 [[package]]
 name = "peaq-pallet-did"
-version = "0.1.0"
-source = "git+https://github.com/peaqnetwork/peaq-pallet-did?branch=peaq-polkadot-v1.1.0#a79d4829050402a8d76dbcb92a6c79469e6262fc"
+version = "0.1.1"
+source = "git+https://github.com/peaqnetwork/peaq-pallet-did?branch=peaq-polkadot-v1.1.0#302c63b1625943c8b4e42e68e822b1e423d3ec71"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
  "num-traits",
+ "pallet-balances",
  "pallet-timestamp",
  "parity-scale-codec",
  "scale-info",

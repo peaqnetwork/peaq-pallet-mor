@@ -11,6 +11,7 @@ use frame_benchmarking::v1::{account, benchmarks, impl_benchmark_test_suite};
 use frame_system::{Pallet as System, RawOrigin};
 use peaq_pallet_did::Pallet as PeaqDid;
 use sp_runtime::traits::Zero;
+use sp_runtime::BoundedVec;
 
 /// Assert that the last event equals the provided one.
 fn assert_last_event<T: Config>(generic_event: <T as Config>::RuntimeEvent) {
@@ -28,8 +29,8 @@ benchmarks! {
         PeaqDid::<T>::add_attribute(
             RawOrigin::Signed(owner.clone()).into(),
             machine.clone(),
-            M_ATTR.to_vec(),
-            M_VAL.to_vec(),
+            BoundedVec::try_from(M_ATTR.to_vec()).unwrap(),
+            BoundedVec::try_from(M_VAL.to_vec()).unwrap(),
             None
         ).expect("check unit-tests");
     }: _(RawOrigin::Signed(owner.clone()), machine.clone())
@@ -45,8 +46,8 @@ benchmarks! {
         PeaqDid::<T>::add_attribute(
             RawOrigin::Signed(owner.clone()).into(),
             machine.clone(),
-            M_ATTR.to_vec(),
-            M_VAL.to_vec(),
+            BoundedVec::try_from(M_ATTR.to_vec()).unwrap(),
+            BoundedVec::try_from(M_VAL.to_vec()).unwrap(),
             None
         ).expect("check unit-tests");
         PeaqMor::<T>::get_registration_reward(

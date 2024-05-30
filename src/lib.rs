@@ -204,6 +204,8 @@ pub mod pallet {
     }
 
     const MAX_BLOCK_REWARD_NUM: u32 = u8::MAX as u32;
+
+    const DID_NAME_ATTRIBUTE: &[u8] = b"peaq-console";
     pub const STORAGE_VERSION: StorageVersion = StorageVersion::new(3);
 
     #[pallet::pallet]
@@ -447,7 +449,7 @@ pub mod pallet {
             ensure_root(origin)?;
 
             let pot: T::AccountId = T::PotId::get().into_account_truncating();
-            let amount = T::Currency::free_balance(&pot);
+            let amount = <T as Config>::Currency::free_balance(&pot);
 
             Self::deposit_event(Event::<T>::FetchedPotBalance(amount));
             Ok(())
@@ -472,11 +474,11 @@ pub mod pallet {
     // See MorBalance trait definition for further details
     impl<T: Config> MorBalance<T::AccountId, BalanceOf<T>> for Pallet<T> {
         fn mint_to_account(account: &T::AccountId, amount: BalanceOf<T>) -> DispatchResult {
-            let imbalance = T::Currency::issue(amount);
+            let imbalance = <T as Config>::Currency::issue(amount);
 
             let amount = imbalance.peek();
 
-            let imbalance = T::Currency::deposit_creating(account, amount);
+            let imbalance = <T as Config>::Currency::deposit_creating(account, amount);
             Self::deposit_event(Event::<T>::MintedTokens(imbalance.peek()));
             Ok(())
         }
@@ -484,8 +486,13 @@ pub mod pallet {
         fn transfer_from_pot(account: &T::AccountId, amount: BalanceOf<T>) -> DispatchResult {
             let pot: T::AccountId = T::PotId::get().into_account_truncating();
 
-            if T::Currency::free_balance(&pot) >= amount {
-                T::Currency::transfer(&pot, account, amount, ExistenceRequirement::KeepAlive)?;
+            if <T as Config>::Currency::free_balance(&pot) >= amount {
+                <T as Config>::Currency::transfer(
+                    &pot,
+                    account,
+                    amount,
+                    ExistenceRequirement::KeepAlive,
+                )?;
                 Ok(())
             } else {
                 Err(Error::<T>::from_mor(InsufficientTokensInPot))
@@ -572,7 +579,7 @@ pub mod pallet {
             machine: &T::AccountId,
         ) -> MorResult<BalanceOf<T>> {
             // Registered in Peaq-DID and is this the owner?
-            DidPallet::<T>::is_owner(owner, machine).map_err(MorError::from)?;
+            DidPallet::<T>::is_owner(owner, machine, DID_NAME_ATTRIBUTE).map_err(MorError::from)?;
 
             let machine_hash = (machine).using_encoded(blake2_256);
             if MachineRegister::<T>::contains_key(machine_hash) {
@@ -588,7 +595,7 @@ pub mod pallet {
 
         fn reward_machine(owner: &T::AccountId, machine: &T::AccountId) -> MorResult<BalanceOf<T>> {
             // Is still registered in Peaq-DID and is this the owner?
-            DidPallet::<T>::is_owner(owner, machine).map_err(MorError::from)?;
+            DidPallet::<T>::is_owner(owner, machine, DID_NAME_ATTRIBUTE).map_err(MorError::from)?;
             // Is machine registered in Peaq-MOR?
             let machine_hash = (machine).using_encoded(blake2_256);
             if !MachineRegister::<T>::contains_key(machine_hash) {
