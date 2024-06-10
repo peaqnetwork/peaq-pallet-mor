@@ -115,7 +115,6 @@ impl pallet_balances::Config for Test {
 parameter_types! {
     pub const StorageDepositBase: BalancesType = 100;
     pub const StorageDepositPerByte: BalancesType = 1;
-    pub const BoundedDataLen: u32 = 2552;
     pub const DIDReserveIdentifier: [u8; 8] = [b'p', b'e', b'a', b'q', b'_', b'd', b'i', b'd'];
 }
 
@@ -123,7 +122,6 @@ impl peaq_pallet_did::Config for Test {
     type RuntimeEvent = RuntimeEvent;
     type Time = pallet_timestamp::Pallet<Test>;
     type WeightInfo = peaq_pallet_did::weights::WeightInfo<Test>;
-    type BoundedDataLen = BoundedDataLen;
     type StorageDepositBase = StorageDepositBase;
     type StorageDepositPerByte = StorageDepositPerByte;
     type Currency = Balances;

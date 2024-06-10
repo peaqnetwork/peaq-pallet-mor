@@ -38,11 +38,10 @@ default-features = false
 git = "https://github.com/peaqnetwork/substrate"
 branch = "peaq-polkadot-v0.9.43"
 
-# [TODO] Need to change after peaq-polkadot-v0.9.43 merged
 [dependencies.peaq-pallet-did]
 default-features = false
 git = "https://github.com/peaqnetwork/peaq-pallet-did"
-branch = "dev"
+branch = "bug/1207512530452118_without_storage_info"
 
 [dependencies.scale-info]
 default-features = false
