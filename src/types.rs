@@ -29,7 +29,7 @@ pub type WeightOf<T> = <T as crate::Config>::WeightInfo;
 )]
 pub struct MorConfig<Balance>
 where
-    Balance: BalanceT + MaxEncodedLen,
+    Balance: MaxEncodedLen,
 {
     /// How much tokens a machine owner gets rewarded, when registering a new machine on the network.
     #[codec(compact)]
