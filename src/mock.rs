@@ -73,7 +73,7 @@ impl frame_system::Config for Test {
     type OnSetCode = ();
     type MaxConsumers = frame_support::traits::ConstU32<16>;
 
-	type RuntimeTask = ();
+    type RuntimeTask = ();
 }
 
 impl pallet_sudo::Config for Test {
@@ -103,7 +103,7 @@ impl pallet_balances::Config for Test {
     // type MaxHolds = ();
     type MaxFreezes = ();
     type RuntimeHoldReason = ();
-	type RuntimeFreezeReason = ();
+    type RuntimeFreezeReason = ();
 }
 
 parameter_types! {
