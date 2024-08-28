@@ -332,7 +332,6 @@ pub mod pallet {
         pub mor_config: MorConfig<BalanceOf<T>>,
     }
 
-    #[cfg(feature = "std")]
     impl<T: Config> Default for GenesisConfig<T> {
         fn default() -> Self {
             Self {
@@ -342,7 +341,7 @@ pub mod pallet {
     }
 
     #[pallet::genesis_build]
-    impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
+    impl<T: Config> BuildGenesisConfig for GenesisConfig<T> {
         fn build(&self) {
             assert!(self.mor_config.is_consistent(T::ExistentialDeposit::get()));
             Pallet::<T>::init_storages(&self.mor_config);
