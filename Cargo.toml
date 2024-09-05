@@ -1,6 +1,6 @@
 [package]
 name = "peaq-pallet-mor"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 description = "A pallet that handles peaq`s block reward distribution for machine owners."
 authors = ["peaq <https://github.com/peaqnetwork>"]
@@ -13,70 +13,24 @@ repository = "https://github.com/peaqnetwork/peaq-pallet-mor/"
 targets = ["x86_64-unknown-linux-gnu"]
 
 [dev-dependencies]
-pallet-balances = { git = "https://github.com/peaqnetwork/substrate", branch = "peaq-polkadot-v0.9.43", default-features = false }
-pallet-sudo = { git = "https://github.com/peaqnetwork/substrate", branch = "peaq-polkadot-v0.9.43", default-features = false }
-pallet-timestamp = { git = "https://github.com/peaqnetwork/substrate", branch = "peaq-polkadot-v0.9.43", default-features = false }
+pallet-balances = { git = "https://github.com/peaqnetwork/polkadot-sdk", branch = "peaq-polkadot-v1.7.2", default-features = false }
+pallet-sudo = { git = "https://github.com/peaqnetwork/polkadot-sdk", branch = "peaq-polkadot-v1.7.2", default-features = false }
+pallet-timestamp = { git = "https://github.com/peaqnetwork/polkadot-sdk", branch = "peaq-polkadot-v1.7.2", default-features = false }
 
-[dependencies.parity-scale-codec]
-default-features = false
-features = ["derive"]
-version = "3.2.2"
-
-[dependencies.frame-benchmarking]
-default-features = false
-git = "https://github.com/peaqnetwork/substrate"
-optional = true
-branch = "peaq-polkadot-v0.9.43"
-
-[dependencies.frame-support]
-default-features = false
-git = "https://github.com/peaqnetwork/substrate"
-branch = "peaq-polkadot-v0.9.43"
-
-[dependencies.frame-system]
-default-features = false
-git = "https://github.com/peaqnetwork/substrate"
-branch = "peaq-polkadot-v0.9.43"
-
-[dependencies.peaq-pallet-did]
-default-features = false
-git = "https://github.com/peaqnetwork/peaq-pallet-did"
-branch = "dev"
-
-[dependencies.scale-info]
-default-features = false
-features = ["derive"]
-version = "2.0.1"
-
-[dependencies.serde]
-version = "1.0"
-features = ["derive"]
-optional = true
-
-[dependencies.sp-core]
-default-features = false
-git = "https://github.com/peaqnetwork/substrate"
-branch = "peaq-polkadot-v0.9.43"
-
-[dependencies.sp-io]
-default-features = false
-git = "https://github.com/peaqnetwork/substrate"
-branch = "peaq-polkadot-v0.9.43"
-
-[dependencies.sp-runtime]
-default-features = false
-git = "https://github.com/peaqnetwork/substrate"
-branch = "peaq-polkadot-v0.9.43"
-
-[dependencies.sp-std]
-default-features = false
-git = "https://github.com/peaqnetwork/substrate"
-branch = "peaq-polkadot-v0.9.43"
-
-[dependencies.log]
-version = "0.4.17"
-default-features = false
-
+[dependencies]
+parity-scale-codec = { version = "3.6.12", default-features = false, features = ["derive"] }
+frame-benchmarking = { default-features = false, git = "https://github.com/peaqnetwork/polkadot-sdk", optional = true, branch = "peaq-polkadot-v1.7.2" }
+frame-support = { default-features = false, git = "https://github.com/peaqnetwork/polkadot-sdk", branch = "peaq-polkadot-v1.7.2" }
+frame-system = { default-features = false, git = "https://github.com/peaqnetwork/polkadot-sdk", branch = "peaq-polkadot-v1.7.2" }
+peaq-pallet-did = { default-features = false, git = "https://github.com/peaqnetwork/peaq-pallet-did", branch = "feat/1207996900912931_merge_async_back" }
+scale-info = { default-features = false, features = ["derive"], version = "2.0.1" }
+serde = { version = "1.0", default-features = false, features = ["derive"] }
+sp-core = { default-features = false, git = "https://github.com/peaqnetwork/polkadot-sdk", branch = "peaq-polkadot-v1.7.2" }
+sp-io = { default-features = false, git = "https://github.com/peaqnetwork/polkadot-sdk", branch = "peaq-polkadot-v1.7.2" }
+sp-runtime = { default-features = false, git = "https://github.com/peaqnetwork/polkadot-sdk", branch = "peaq-polkadot-v1.7.2" }
+sp-std = { default-features = false, git = "https://github.com/peaqnetwork/polkadot-sdk", branch = "peaq-polkadot-v1.7.2" }
+log = { version = "0.4.17", default-features = false }
+num-traits = { version = "0.2.18", default-features = false }
 
 [features]
 default = ["std"]
@@ -91,7 +45,7 @@ std = [
     "parity-scale-codec/std",
     "peaq-pallet-did/std",
     "scale-info/std",
-    "serde",
+    "serde/std",
     "sp-core/std",
 	"sp-io/std",
 	"sp-runtime/std",
