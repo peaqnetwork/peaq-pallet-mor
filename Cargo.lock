@@ -2382,7 +2382,7 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-did"
 version = "0.1.1"
-source = "git+https://github.com/peaqnetwork/peaq-pallet-did?branch=feat/1207996900912931_merge_async_back#dd526c43c22d7434f9ee6a252e3a9647a2c19556"
+source = "git+https://github.com/peaqnetwork/peaq-pallet-did?branch=dev#d4021c704d47806a99f0f02a460dc95ec0d4271e"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -2401,7 +2401,7 @@ dependencies = [
 
 [[package]]
 name = "peaq-pallet-mor"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
