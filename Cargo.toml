@@ -22,7 +22,7 @@ parity-scale-codec = { version = "3.6.12", default-features = false, features = 
 frame-benchmarking = { default-features = false, git = "https://github.com/peaqnetwork/polkadot-sdk", optional = true, branch = "peaq-polkadot-v1.7.2" }
 frame-support = { default-features = false, git = "https://github.com/peaqnetwork/polkadot-sdk", branch = "peaq-polkadot-v1.7.2" }
 frame-system = { default-features = false, git = "https://github.com/peaqnetwork/polkadot-sdk", branch = "peaq-polkadot-v1.7.2" }
-peaq-pallet-did = { default-features = false, git = "https://github.com/peaqnetwork/peaq-pallet-did", branch = "peaq-polkadot-v1.7.2" }
+peaq-pallet-did = { default-features = false, git = "https://github.com/peaqnetwork/peaq-pallet-did", branch = "jay-disable-deposit-test" }
 scale-info = { default-features = false, features = ["derive"], version = "2.0.1" }
 serde = { version = "1.0", default-features = false, features = ["derive"] }
 sp-core = { default-features = false, git = "https://github.com/peaqnetwork/polkadot-sdk", branch = "peaq-polkadot-v1.7.2" }
