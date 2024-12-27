@@ -60,13 +60,14 @@ impl<Balance: BalanceT> MorConfig<Balance> {
 
 impl<Balance: BalanceT> Default for MorConfig<Balance> {
     fn default() -> Self {
+        let min = Balance::one().saturating_mul(1000u32.into());
         MorConfig {
             // Because Balance can only be set to zero to keep the pallet as generic
             // as possible - set every parameter to zero! Except for track_n_block_rewards!
             // -> an initial configuration has to be done in Genesis or after deployment...
-            registration_reward: Balance::zero(),
-            machine_usage_fee_min: Balance::zero(),
-            machine_usage_fee_max: Balance::one(),
+            registration_reward: min.clone(),
+            machine_usage_fee_min: min.saturating_add(0u32.into()),
+            machine_usage_fee_max: min.saturating_add(1u32.into()),
             track_n_block_rewards: 1,
         }
     }

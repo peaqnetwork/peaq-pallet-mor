@@ -14,7 +14,7 @@ use sp_core::{sr25519, H256};
 use sp_io;
 use sp_runtime::traits::{AccountIdConversion, BlakeTwo256, IdentityLookup};
 use sp_runtime::BuildStorage;
-use sp_std::{boxed::Box, vec};
+use sp_std::vec;
 
 // system
 pub type Block = frame_system::mocking::MockBlock<Test>;
@@ -72,8 +72,12 @@ impl frame_system::Config for Test {
     type SS58Prefix = SS58Prefix;
     type OnSetCode = ();
     type MaxConsumers = frame_support::traits::ConstU32<16>;
-
     type RuntimeTask = ();
+    type SingleBlockMigrations = ();                                                                     
+    type MultiBlockMigrator = ();                                                                        
+    type PreInherents = ();                                                                              
+    type PostInherents = ();
+    type PostTransactions = ();
 }
 
 impl pallet_sudo::Config for Test {
