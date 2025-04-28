@@ -1,6 +1,6 @@
 [package]
 name = "peaq-pallet-mor"
-version = "0.1.2"
+version = "0.2.2"
 edition = "2021"
 description = "A pallet that handles peaq`s block reward distribution for machine owners."
 authors = ["peaq <https://github.com/peaqnetwork>"]
