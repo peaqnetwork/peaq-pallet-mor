@@ -1281,7 +1281,7 @@ dependencies = [
 [[package]]
 name = "frame-benchmarking"
 version = "28.0.0"
-source = "git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-improvement-v01#78b3394f8a2356ce7d13abdaa8bff8902a6c0b05"
+source = "git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-pool-issue#78b3394f8a2356ce7d13abdaa8bff8902a6c0b05"
 dependencies = [
  "frame-support",
  "frame-support-procedural",
@@ -1297,9 +1297,9 @@ dependencies = [
  "sp-core",
  "sp-io",
  "sp-runtime",
- "sp-runtime-interface 24.0.0 (git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-improvement-v01)",
- "sp-std 14.0.0 (git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-improvement-v01)",
- "sp-storage 19.0.0 (git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-improvement-v01)",
+ "sp-runtime-interface 24.0.0 (git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-pool-issue)",
+ "sp-std 14.0.0 (git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-pool-issue)",
+ "sp-storage 19.0.0 (git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-pool-issue)",
  "static_assertions",
 ]
 
@@ -1318,7 +1318,7 @@ dependencies = [
 [[package]]
 name = "frame-support"
 version = "28.0.0"
-source = "git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-improvement-v01#78b3394f8a2356ce7d13abdaa8bff8902a6c0b05"
+source = "git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-pool-issue#78b3394f8a2356ce7d13abdaa8bff8902a6c0b05"
 dependencies = [
  "aquamarine",
  "array-bytes",
@@ -1341,7 +1341,7 @@ dependencies = [
  "sp-arithmetic",
  "sp-core",
  "sp-crypto-hashing-proc-macro",
- "sp-debug-derive 14.0.0 (git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-improvement-v01)",
+ "sp-debug-derive 14.0.0 (git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-pool-issue)",
  "sp-genesis-builder",
  "sp-inherents",
  "sp-io",
@@ -1349,8 +1349,8 @@ dependencies = [
  "sp-runtime",
  "sp-staking",
  "sp-state-machine",
- "sp-std 14.0.0 (git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-improvement-v01)",
- "sp-tracing 16.0.0 (git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-improvement-v01)",
+ "sp-std 14.0.0 (git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-pool-issue)",
+ "sp-tracing 16.0.0 (git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-pool-issue)",
  "sp-weights",
  "static_assertions",
  "tt-call",
@@ -1359,7 +1359,7 @@ dependencies = [
 [[package]]
 name = "frame-support-procedural"
 version = "23.0.0"
-source = "git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-improvement-v01#78b3394f8a2356ce7d13abdaa8bff8902a6c0b05"
+source = "git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-pool-issue#78b3394f8a2356ce7d13abdaa8bff8902a6c0b05"
 dependencies = [
  "Inflector",
  "cfg-expr",
@@ -1378,7 +1378,7 @@ dependencies = [
 [[package]]
 name = "frame-support-procedural-tools"
 version = "10.0.0"
-source = "git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-improvement-v01#78b3394f8a2356ce7d13abdaa8bff8902a6c0b05"
+source = "git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-pool-issue#78b3394f8a2356ce7d13abdaa8bff8902a6c0b05"
 dependencies = [
  "frame-support-procedural-tools-derive",
  "proc-macro-crate 3.1.0",
@@ -1390,7 +1390,7 @@ dependencies = [
 [[package]]
 name = "frame-support-procedural-tools-derive"
 version = "11.0.0"
-source = "git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-improvement-v01#78b3394f8a2356ce7d13abdaa8bff8902a6c0b05"
+source = "git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-pool-issue#78b3394f8a2356ce7d13abdaa8bff8902a6c0b05"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1400,7 +1400,7 @@ dependencies = [
 [[package]]
 name = "frame-system"
 version = "28.0.0"
-source = "git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-improvement-v01#78b3394f8a2356ce7d13abdaa8bff8902a6c0b05"
+source = "git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-pool-issue#78b3394f8a2356ce7d13abdaa8bff8902a6c0b05"
 dependencies = [
  "cfg-if",
  "docify",
@@ -1412,7 +1412,7 @@ dependencies = [
  "sp-core",
  "sp-io",
  "sp-runtime",
- "sp-std 14.0.0 (git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-improvement-v01)",
+ "sp-std 14.0.0 (git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-pool-issue)",
  "sp-version",
  "sp-weights",
 ]
@@ -2259,7 +2259,7 @@ checksum = "b15813163c1d831bf4a13c3610c05c0d03b39feb07f7e09fa234dac9b15aaf39"
 [[package]]
 name = "pallet-balances"
 version = "28.0.0"
-source = "git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-improvement-v01#78b3394f8a2356ce7d13abdaa8bff8902a6c0b05"
+source = "git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-pool-issue#78b3394f8a2356ce7d13abdaa8bff8902a6c0b05"
 dependencies = [
  "docify",
  "frame-benchmarking",
@@ -2269,13 +2269,13 @@ dependencies = [
  "parity-scale-codec",
  "scale-info",
  "sp-runtime",
- "sp-std 14.0.0 (git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-improvement-v01)",
+ "sp-std 14.0.0 (git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-pool-issue)",
 ]
 
 [[package]]
 name = "pallet-sudo"
 version = "28.0.0"
-source = "git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-improvement-v01#78b3394f8a2356ce7d13abdaa8bff8902a6c0b05"
+source = "git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-pool-issue#78b3394f8a2356ce7d13abdaa8bff8902a6c0b05"
 dependencies = [
  "docify",
  "frame-benchmarking",
@@ -2285,13 +2285,13 @@ dependencies = [
  "scale-info",
  "sp-io",
  "sp-runtime",
- "sp-std 14.0.0 (git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-improvement-v01)",
+ "sp-std 14.0.0 (git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-pool-issue)",
 ]
 
 [[package]]
 name = "pallet-timestamp"
 version = "27.0.0"
-source = "git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-improvement-v01#78b3394f8a2356ce7d13abdaa8bff8902a6c0b05"
+source = "git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-pool-issue#78b3394f8a2356ce7d13abdaa8bff8902a6c0b05"
 dependencies = [
  "docify",
  "frame-benchmarking",
@@ -2303,8 +2303,8 @@ dependencies = [
  "sp-inherents",
  "sp-io",
  "sp-runtime",
- "sp-std 14.0.0 (git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-improvement-v01)",
- "sp-storage 19.0.0 (git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-improvement-v01)",
+ "sp-std 14.0.0 (git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-pool-issue)",
+ "sp-storage 19.0.0 (git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-pool-issue)",
  "sp-timestamp",
 ]
 
@@ -2382,7 +2382,7 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-did"
 version = "0.1.1"
-source = "git+https://github.com/peaqnetwork/peaq-pallet-did?branch=release-improvement-v01#9eae4dbc8bc524366246ab04a6fe2442ab597104"
+source = "git+https://github.com/peaqnetwork/peaq-pallet-did?branch=release-pool-issue#a1979cdf03a0ca045bb9b6fd2f939f21e29ae2a7"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -2396,7 +2396,7 @@ dependencies = [
  "sp-io",
  "sp-rpc",
  "sp-runtime",
- "sp-std 14.0.0 (git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-improvement-v01)",
+ "sp-std 14.0.0 (git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-pool-issue)",
 ]
 
 [[package]]
@@ -2418,7 +2418,7 @@ dependencies = [
  "sp-core",
  "sp-io",
  "sp-runtime",
- "sp-std 14.0.0 (git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-improvement-v01)",
+ "sp-std 14.0.0 (git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-pool-issue)",
 ]
 
 [[package]]
@@ -3119,7 +3119,7 @@ checksum = "4dccd0940a2dcdf68d092b8cbab7dc0ad8fa938bf95787e1b916b0e3d0e8e970"
 [[package]]
 name = "sp-api"
 version = "26.0.0"
-source = "git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-improvement-v01#78b3394f8a2356ce7d13abdaa8bff8902a6c0b05"
+source = "git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-pool-issue#78b3394f8a2356ce7d13abdaa8bff8902a6c0b05"
 dependencies = [
  "hash-db",
  "log",
@@ -3127,11 +3127,11 @@ dependencies = [
  "scale-info",
  "sp-api-proc-macro",
  "sp-core",
- "sp-externalities 0.25.0 (git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-improvement-v01)",
+ "sp-externalities 0.25.0 (git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-pool-issue)",
  "sp-metadata-ir",
  "sp-runtime",
  "sp-state-machine",
- "sp-std 14.0.0 (git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-improvement-v01)",
+ "sp-std 14.0.0 (git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-pool-issue)",
  "sp-trie",
  "sp-version",
  "thiserror",
@@ -3140,7 +3140,7 @@ dependencies = [
 [[package]]
 name = "sp-api-proc-macro"
 version = "15.0.0"
-source = "git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-improvement-v01#78b3394f8a2356ce7d13abdaa8bff8902a6c0b05"
+source = "git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-pool-issue#78b3394f8a2356ce7d13abdaa8bff8902a6c0b05"
 dependencies = [
  "Inflector",
  "blake2",
@@ -3154,27 +3154,27 @@ dependencies = [
 [[package]]
 name = "sp-application-crypto"
 version = "30.0.0"
-source = "git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-improvement-v01#78b3394f8a2356ce7d13abdaa8bff8902a6c0b05"
+source = "git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-pool-issue#78b3394f8a2356ce7d13abdaa8bff8902a6c0b05"
 dependencies = [
  "parity-scale-codec",
  "scale-info",
  "serde",
  "sp-core",
  "sp-io",
- "sp-std 14.0.0 (git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-improvement-v01)",
+ "sp-std 14.0.0 (git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-pool-issue)",
 ]
 
 [[package]]
 name = "sp-arithmetic"
 version = "23.0.0"
-source = "git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-improvement-v01#78b3394f8a2356ce7d13abdaa8bff8902a6c0b05"
+source = "git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-pool-issue#78b3394f8a2356ce7d13abdaa8bff8902a6c0b05"
 dependencies = [
  "integer-sqrt",
  "num-traits",
  "parity-scale-codec",
  "scale-info",
  "serde",
- "sp-std 14.0.0 (git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-improvement-v01)",
+ "sp-std 14.0.0 (git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-pool-issue)",
  "static_assertions",
 ]
 
@@ -3199,7 +3199,7 @@ dependencies = [
 [[package]]
 name = "sp-core"
 version = "28.0.0"
-source = "git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-improvement-v01#78b3394f8a2356ce7d13abdaa8bff8902a6c0b05"
+source = "git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-pool-issue#78b3394f8a2356ce7d13abdaa8bff8902a6c0b05"
 dependencies = [
  "array-bytes",
  "bandersnatch_vrfs",
@@ -3229,11 +3229,11 @@ dependencies = [
  "secrecy",
  "serde",
  "sp-crypto-hashing",
- "sp-debug-derive 14.0.0 (git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-improvement-v01)",
- "sp-externalities 0.25.0 (git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-improvement-v01)",
- "sp-runtime-interface 24.0.0 (git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-improvement-v01)",
- "sp-std 14.0.0 (git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-improvement-v01)",
- "sp-storage 19.0.0 (git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-improvement-v01)",
+ "sp-debug-derive 14.0.0 (git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-pool-issue)",
+ "sp-externalities 0.25.0 (git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-pool-issue)",
+ "sp-runtime-interface 24.0.0 (git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-pool-issue)",
+ "sp-std 14.0.0 (git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-pool-issue)",
+ "sp-storage 19.0.0 (git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-pool-issue)",
  "ss58-registry",
  "substrate-bip39",
  "thiserror",
@@ -3265,7 +3265,7 @@ dependencies = [
 [[package]]
 name = "sp-crypto-hashing"
 version = "0.0.0"
-source = "git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-improvement-v01#78b3394f8a2356ce7d13abdaa8bff8902a6c0b05"
+source = "git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-pool-issue#78b3394f8a2356ce7d13abdaa8bff8902a6c0b05"
 dependencies = [
  "blake2b_simd",
  "byteorder",
@@ -3278,7 +3278,7 @@ dependencies = [
 [[package]]
 name = "sp-crypto-hashing-proc-macro"
 version = "0.0.0"
-source = "git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-improvement-v01#78b3394f8a2356ce7d13abdaa8bff8902a6c0b05"
+source = "git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-pool-issue#78b3394f8a2356ce7d13abdaa8bff8902a6c0b05"
 dependencies = [
  "quote",
  "sp-crypto-hashing",
@@ -3288,7 +3288,7 @@ dependencies = [
 [[package]]
 name = "sp-debug-derive"
 version = "14.0.0"
-source = "git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-improvement-v01#78b3394f8a2356ce7d13abdaa8bff8902a6c0b05"
+source = "git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-pool-issue#78b3394f8a2356ce7d13abdaa8bff8902a6c0b05"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -3308,12 +3308,12 @@ dependencies = [
 [[package]]
 name = "sp-externalities"
 version = "0.25.0"
-source = "git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-improvement-v01#78b3394f8a2356ce7d13abdaa8bff8902a6c0b05"
+source = "git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-pool-issue#78b3394f8a2356ce7d13abdaa8bff8902a6c0b05"
 dependencies = [
  "environmental",
  "parity-scale-codec",
- "sp-std 14.0.0 (git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-improvement-v01)",
- "sp-storage 19.0.0 (git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-improvement-v01)",
+ "sp-std 14.0.0 (git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-pool-issue)",
+ "sp-storage 19.0.0 (git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-pool-issue)",
 ]
 
 [[package]]
@@ -3329,32 +3329,32 @@ dependencies = [
 [[package]]
 name = "sp-genesis-builder"
 version = "0.7.0"
-source = "git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-improvement-v01#78b3394f8a2356ce7d13abdaa8bff8902a6c0b05"
+source = "git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-pool-issue#78b3394f8a2356ce7d13abdaa8bff8902a6c0b05"
 dependencies = [
  "serde_json",
  "sp-api",
  "sp-runtime",
- "sp-std 14.0.0 (git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-improvement-v01)",
+ "sp-std 14.0.0 (git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-pool-issue)",
 ]
 
 [[package]]
 name = "sp-inherents"
 version = "26.0.0"
-source = "git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-improvement-v01#78b3394f8a2356ce7d13abdaa8bff8902a6c0b05"
+source = "git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-pool-issue#78b3394f8a2356ce7d13abdaa8bff8902a6c0b05"
 dependencies = [
  "async-trait",
  "impl-trait-for-tuples",
  "parity-scale-codec",
  "scale-info",
  "sp-runtime",
- "sp-std 14.0.0 (git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-improvement-v01)",
+ "sp-std 14.0.0 (git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-pool-issue)",
  "thiserror",
 ]
 
 [[package]]
 name = "sp-io"
 version = "30.0.0"
-source = "git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-improvement-v01#78b3394f8a2356ce7d13abdaa8bff8902a6c0b05"
+source = "git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-pool-issue#78b3394f8a2356ce7d13abdaa8bff8902a6c0b05"
 dependencies = [
  "bytes",
  "ed25519-dalek",
@@ -3365,12 +3365,12 @@ dependencies = [
  "secp256k1",
  "sp-core",
  "sp-crypto-hashing",
- "sp-externalities 0.25.0 (git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-improvement-v01)",
+ "sp-externalities 0.25.0 (git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-pool-issue)",
  "sp-keystore",
- "sp-runtime-interface 24.0.0 (git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-improvement-v01)",
+ "sp-runtime-interface 24.0.0 (git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-pool-issue)",
  "sp-state-machine",
- "sp-std 14.0.0 (git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-improvement-v01)",
- "sp-tracing 16.0.0 (git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-improvement-v01)",
+ "sp-std 14.0.0 (git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-pool-issue)",
+ "sp-tracing 16.0.0 (git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-pool-issue)",
  "sp-trie",
  "tracing",
  "tracing-core",
@@ -3379,30 +3379,30 @@ dependencies = [
 [[package]]
 name = "sp-keystore"
 version = "0.34.0"
-source = "git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-improvement-v01#78b3394f8a2356ce7d13abdaa8bff8902a6c0b05"
+source = "git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-pool-issue#78b3394f8a2356ce7d13abdaa8bff8902a6c0b05"
 dependencies = [
  "parity-scale-codec",
  "parking_lot",
  "sp-core",
- "sp-externalities 0.25.0 (git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-improvement-v01)",
+ "sp-externalities 0.25.0 (git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-pool-issue)",
  "thiserror",
 ]
 
 [[package]]
 name = "sp-metadata-ir"
 version = "0.6.0"
-source = "git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-improvement-v01#78b3394f8a2356ce7d13abdaa8bff8902a6c0b05"
+source = "git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-pool-issue#78b3394f8a2356ce7d13abdaa8bff8902a6c0b05"
 dependencies = [
  "frame-metadata",
  "parity-scale-codec",
  "scale-info",
- "sp-std 14.0.0 (git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-improvement-v01)",
+ "sp-std 14.0.0 (git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-pool-issue)",
 ]
 
 [[package]]
 name = "sp-panic-handler"
 version = "13.0.0"
-source = "git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-improvement-v01#78b3394f8a2356ce7d13abdaa8bff8902a6c0b05"
+source = "git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-pool-issue#78b3394f8a2356ce7d13abdaa8bff8902a6c0b05"
 dependencies = [
  "backtrace",
  "lazy_static",
@@ -3412,7 +3412,7 @@ dependencies = [
 [[package]]
 name = "sp-rpc"
 version = "26.0.0"
-source = "git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-improvement-v01#78b3394f8a2356ce7d13abdaa8bff8902a6c0b05"
+source = "git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-pool-issue#78b3394f8a2356ce7d13abdaa8bff8902a6c0b05"
 dependencies = [
  "rustc-hash",
  "serde",
@@ -3422,7 +3422,7 @@ dependencies = [
 [[package]]
 name = "sp-runtime"
 version = "31.0.1"
-source = "git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-improvement-v01#78b3394f8a2356ce7d13abdaa8bff8902a6c0b05"
+source = "git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-pool-issue#78b3394f8a2356ce7d13abdaa8bff8902a6c0b05"
 dependencies = [
  "docify",
  "either",
@@ -3439,25 +3439,25 @@ dependencies = [
  "sp-arithmetic",
  "sp-core",
  "sp-io",
- "sp-std 14.0.0 (git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-improvement-v01)",
+ "sp-std 14.0.0 (git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-pool-issue)",
  "sp-weights",
 ]
 
 [[package]]
 name = "sp-runtime-interface"
 version = "24.0.0"
-source = "git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-improvement-v01#78b3394f8a2356ce7d13abdaa8bff8902a6c0b05"
+source = "git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-pool-issue#78b3394f8a2356ce7d13abdaa8bff8902a6c0b05"
 dependencies = [
  "bytes",
  "impl-trait-for-tuples",
  "parity-scale-codec",
  "primitive-types",
- "sp-externalities 0.25.0 (git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-improvement-v01)",
- "sp-runtime-interface-proc-macro 17.0.0 (git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-improvement-v01)",
- "sp-std 14.0.0 (git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-improvement-v01)",
- "sp-storage 19.0.0 (git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-improvement-v01)",
- "sp-tracing 16.0.0 (git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-improvement-v01)",
- "sp-wasm-interface 20.0.0 (git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-improvement-v01)",
+ "sp-externalities 0.25.0 (git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-pool-issue)",
+ "sp-runtime-interface-proc-macro 17.0.0 (git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-pool-issue)",
+ "sp-std 14.0.0 (git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-pool-issue)",
+ "sp-storage 19.0.0 (git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-pool-issue)",
+ "sp-tracing 16.0.0 (git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-pool-issue)",
+ "sp-wasm-interface 20.0.0 (git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-pool-issue)",
  "static_assertions",
 ]
 
@@ -3483,7 +3483,7 @@ dependencies = [
 [[package]]
 name = "sp-runtime-interface-proc-macro"
 version = "17.0.0"
-source = "git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-improvement-v01#78b3394f8a2356ce7d13abdaa8bff8902a6c0b05"
+source = "git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-pool-issue#78b3394f8a2356ce7d13abdaa8bff8902a6c0b05"
 dependencies = [
  "Inflector",
  "expander",
@@ -3509,7 +3509,7 @@ dependencies = [
 [[package]]
 name = "sp-staking"
 version = "26.0.0"
-source = "git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-improvement-v01#78b3394f8a2356ce7d13abdaa8bff8902a6c0b05"
+source = "git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-pool-issue#78b3394f8a2356ce7d13abdaa8bff8902a6c0b05"
 dependencies = [
  "impl-trait-for-tuples",
  "parity-scale-codec",
@@ -3517,13 +3517,13 @@ dependencies = [
  "serde",
  "sp-core",
  "sp-runtime",
- "sp-std 14.0.0 (git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-improvement-v01)",
+ "sp-std 14.0.0 (git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-pool-issue)",
 ]
 
 [[package]]
 name = "sp-state-machine"
 version = "0.35.0"
-source = "git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-improvement-v01#78b3394f8a2356ce7d13abdaa8bff8902a6c0b05"
+source = "git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-pool-issue#78b3394f8a2356ce7d13abdaa8bff8902a6c0b05"
 dependencies = [
  "hash-db",
  "log",
@@ -3532,9 +3532,9 @@ dependencies = [
  "rand",
  "smallvec",
  "sp-core",
- "sp-externalities 0.25.0 (git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-improvement-v01)",
+ "sp-externalities 0.25.0 (git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-pool-issue)",
  "sp-panic-handler",
- "sp-std 14.0.0 (git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-improvement-v01)",
+ "sp-std 14.0.0 (git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-pool-issue)",
  "sp-trie",
  "thiserror",
  "tracing",
@@ -3544,7 +3544,7 @@ dependencies = [
 [[package]]
 name = "sp-std"
 version = "14.0.0"
-source = "git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-improvement-v01#78b3394f8a2356ce7d13abdaa8bff8902a6c0b05"
+source = "git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-pool-issue#78b3394f8a2356ce7d13abdaa8bff8902a6c0b05"
 
 [[package]]
 name = "sp-std"
@@ -3554,14 +3554,14 @@ source = "git+https://github.com/paritytech/polkadot-sdk#eac2a22a4801e1539a97a7f
 [[package]]
 name = "sp-storage"
 version = "19.0.0"
-source = "git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-improvement-v01#78b3394f8a2356ce7d13abdaa8bff8902a6c0b05"
+source = "git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-pool-issue#78b3394f8a2356ce7d13abdaa8bff8902a6c0b05"
 dependencies = [
  "impl-serde",
  "parity-scale-codec",
  "ref-cast",
  "serde",
- "sp-debug-derive 14.0.0 (git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-improvement-v01)",
- "sp-std 14.0.0 (git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-improvement-v01)",
+ "sp-debug-derive 14.0.0 (git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-pool-issue)",
+ "sp-std 14.0.0 (git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-pool-issue)",
 ]
 
 [[package]]
@@ -3579,23 +3579,23 @@ dependencies = [
 [[package]]
 name = "sp-timestamp"
 version = "26.0.0"
-source = "git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-improvement-v01#78b3394f8a2356ce7d13abdaa8bff8902a6c0b05"
+source = "git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-pool-issue#78b3394f8a2356ce7d13abdaa8bff8902a6c0b05"
 dependencies = [
  "async-trait",
  "parity-scale-codec",
  "sp-inherents",
  "sp-runtime",
- "sp-std 14.0.0 (git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-improvement-v01)",
+ "sp-std 14.0.0 (git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-pool-issue)",
  "thiserror",
 ]
 
 [[package]]
 name = "sp-tracing"
 version = "16.0.0"
-source = "git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-improvement-v01#78b3394f8a2356ce7d13abdaa8bff8902a6c0b05"
+source = "git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-pool-issue#78b3394f8a2356ce7d13abdaa8bff8902a6c0b05"
 dependencies = [
  "parity-scale-codec",
- "sp-std 14.0.0 (git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-improvement-v01)",
+ "sp-std 14.0.0 (git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-pool-issue)",
  "tracing",
  "tracing-core",
  "tracing-subscriber 0.2.25",
@@ -3615,7 +3615,7 @@ dependencies = [
 [[package]]
 name = "sp-trie"
 version = "29.0.0"
-source = "git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-improvement-v01#78b3394f8a2356ce7d13abdaa8bff8902a6c0b05"
+source = "git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-pool-issue#78b3394f8a2356ce7d13abdaa8bff8902a6c0b05"
 dependencies = [
  "ahash 0.8.6",
  "hash-db",
@@ -3628,8 +3628,8 @@ dependencies = [
  "scale-info",
  "schnellru",
  "sp-core",
- "sp-externalities 0.25.0 (git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-improvement-v01)",
- "sp-std 14.0.0 (git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-improvement-v01)",
+ "sp-externalities 0.25.0 (git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-pool-issue)",
+ "sp-std 14.0.0 (git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-pool-issue)",
  "thiserror",
  "tracing",
  "trie-db",
@@ -3639,7 +3639,7 @@ dependencies = [
 [[package]]
 name = "sp-version"
 version = "29.0.0"
-source = "git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-improvement-v01#78b3394f8a2356ce7d13abdaa8bff8902a6c0b05"
+source = "git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-pool-issue#78b3394f8a2356ce7d13abdaa8bff8902a6c0b05"
 dependencies = [
  "impl-serde",
  "parity-scale-codec",
@@ -3648,7 +3648,7 @@ dependencies = [
  "serde",
  "sp-crypto-hashing-proc-macro",
  "sp-runtime",
- "sp-std 14.0.0 (git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-improvement-v01)",
+ "sp-std 14.0.0 (git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-pool-issue)",
  "sp-version-proc-macro",
  "thiserror",
 ]
@@ -3656,7 +3656,7 @@ dependencies = [
 [[package]]
 name = "sp-version-proc-macro"
 version = "13.0.0"
-source = "git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-improvement-v01#78b3394f8a2356ce7d13abdaa8bff8902a6c0b05"
+source = "git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-pool-issue#78b3394f8a2356ce7d13abdaa8bff8902a6c0b05"
 dependencies = [
  "parity-scale-codec",
  "proc-macro2",
@@ -3667,13 +3667,13 @@ dependencies = [
 [[package]]
 name = "sp-wasm-interface"
 version = "20.0.0"
-source = "git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-improvement-v01#78b3394f8a2356ce7d13abdaa8bff8902a6c0b05"
+source = "git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-pool-issue#78b3394f8a2356ce7d13abdaa8bff8902a6c0b05"
 dependencies = [
  "anyhow",
  "impl-trait-for-tuples",
  "log",
  "parity-scale-codec",
- "sp-std 14.0.0 (git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-improvement-v01)",
+ "sp-std 14.0.0 (git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-pool-issue)",
  "wasmtime",
 ]
 
@@ -3690,7 +3690,7 @@ dependencies = [
 [[package]]
 name = "sp-weights"
 version = "27.0.0"
-source = "git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-improvement-v01#78b3394f8a2356ce7d13abdaa8bff8902a6c0b05"
+source = "git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-pool-issue#78b3394f8a2356ce7d13abdaa8bff8902a6c0b05"
 dependencies = [
  "bounded-collections",
  "parity-scale-codec",
@@ -3698,8 +3698,8 @@ dependencies = [
  "serde",
  "smallvec",
  "sp-arithmetic",
- "sp-debug-derive 14.0.0 (git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-improvement-v01)",
- "sp-std 14.0.0 (git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-improvement-v01)",
+ "sp-debug-derive 14.0.0 (git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-pool-issue)",
+ "sp-std 14.0.0 (git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-pool-issue)",
 ]
 
 [[package]]
