@@ -2058,7 +2058,7 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-did"
 version = "0.2.1"
-source = "git+https://github.com/peaqnetwork/peaq-pallet-did?branch=peaq-polkadot-stable2503-4#4e70ed6173dcb9c771e219e1e1d451da47607f56"
+source = "git+https://github.com/peaqnetwork/peaq-pallet-did?branch=peaq-polkadot-stable2503-4#5ac205fd84f1924fc5a8de11b8557ea1220f9864"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
