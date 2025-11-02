@@ -1,7 +1,7 @@
 //! All pallet relevant structs are defined here
 
 use frame_support::traits::{tokens::Balance as BalanceT, Currency};
-use parity_scale_codec::{Decode, Encode, MaxEncodedLen};
+use parity_scale_codec::{Decode, DecodeWithMemTracking, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
 use serde::{Deserialize, Serialize};
 use sp_core::RuntimeDebug;
@@ -26,6 +26,7 @@ pub type WeightOf<T> = <T as crate::Config>::WeightInfo;
     MaxEncodedLen,
     Serialize,
     Deserialize,
+    DecodeWithMemTracking,
 )]
 pub struct MorConfig<Balance>
 where
@@ -61,13 +62,14 @@ impl<Balance: BalanceT> MorConfig<Balance> {
 impl<Balance: BalanceT> Default for MorConfig<Balance> {
     fn default() -> Self {
         MorConfig {
-            // Because Balance can only be set to zero to keep the pallet as generic
-            // as possible - set every parameter to zero! Except for track_n_block_rewards!
-            // -> an initial configuration has to be done in Genesis or after deployment...
-            registration_reward: Balance::zero(),
-            machine_usage_fee_min: Balance::zero(),
-            machine_usage_fee_max: Balance::one(),
-            track_n_block_rewards: 1,
+            // Consistent default config for sanity checks
+            registration_reward: Balance::try_from(100_000_000_000_000_000u128)
+                .unwrap_or(Balance::one()),
+            machine_usage_fee_min: Balance::try_from(100_000_000_000_000_000u128)
+                .unwrap_or(Balance::zero()),
+            machine_usage_fee_max: Balance::try_from(3_000_000_000_000_000_000u128)
+                .unwrap_or(Balance::one()),
+            track_n_block_rewards: 10u8,
         }
     }
 }

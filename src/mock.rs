@@ -7,14 +7,10 @@ pub use crate::{
 
 use frame_benchmarking::account;
 use frame_support::{construct_runtime, parameter_types, PalletId};
-use frame_system;
-use pallet_balances;
-use pallet_timestamp;
 use sp_core::{sr25519, H256};
-use sp_io;
 use sp_runtime::traits::{AccountIdConversion, BlakeTwo256, IdentityLookup};
 use sp_runtime::BuildStorage;
-use sp_std::{boxed::Box, vec};
+use sp_std::vec;
 
 // system
 pub type Block = frame_system::mocking::MockBlock<Test>;
@@ -43,7 +39,7 @@ parameter_types! {
     // peaq-pallet-mor
     pub const PotId: PalletId = PalletId(*b"PotMchOw");
     // pallet_balances
-    pub const ExistentialDeposit: u128 = 500;
+    pub const ExistentialDeposit: u128 = 1;
     pub const MaxLocks: u32 = 50;
     pub const MaxReserve: u32 = 50;
 }
@@ -72,8 +68,13 @@ impl frame_system::Config for Test {
     type SS58Prefix = SS58Prefix;
     type OnSetCode = ();
     type MaxConsumers = frame_support::traits::ConstU32<16>;
-
     type RuntimeTask = ();
+    type ExtensionsWeightInfo = ();
+    type SingleBlockMigrations = ();
+    type MultiBlockMigrator = ();
+    type PreInherents = ();
+    type PostInherents = ();
+    type PostTransactions = ();
 }
 
 impl pallet_sudo::Config for Test {
@@ -104,6 +105,7 @@ impl pallet_balances::Config for Test {
     type MaxFreezes = ();
     type RuntimeHoldReason = ();
     type RuntimeFreezeReason = ();
+    type DoneSlashHandler = ();
 }
 
 parameter_types! {
@@ -144,11 +146,9 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
         .build_storage()
         .unwrap();
 
-    pallet_sudo::GenesisConfig::<Test> {
-        key: Some(owner.clone()),
-    }
-    .assimilate_storage(&mut test_ext)
-    .unwrap();
+    pallet_sudo::GenesisConfig::<Test> { key: Some(owner) }
+        .assimilate_storage(&mut test_ext)
+        .unwrap();
 
     pallet_balances::GenesisConfig::<Test> {
         balances: vec![
@@ -157,6 +157,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
             (machine, 1_000_000_000_000_000_000),
             (mor_pot, 10_000_000_000_000_000_000),
         ],
+        ..Default::default()
     }
     .assimilate_storage(&mut test_ext)
     .unwrap();

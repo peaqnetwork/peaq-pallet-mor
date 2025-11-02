@@ -22,7 +22,7 @@ mod v2 {
             let mut weight_reads = 1;
             let mut weight_writes = 0;
 
-            let this_version = Pallet::<T>::current_storage_version();
+            let this_version = Pallet::<T>::in_code_storage_version();
             let on_chain_version = Pallet::<T>::on_chain_storage_version();
 
             if on_chain_version < this_version {
