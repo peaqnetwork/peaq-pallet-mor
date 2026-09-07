@@ -4,7 +4,6 @@ use frame_support::traits::{tokens::Balance as BalanceT, Currency};
 use parity_scale_codec::{Decode, DecodeWithMemTracking, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
 use serde::{Deserialize, Serialize};
-use sp_core::RuntimeDebug;
 
 /// Short form type definition to simplify method definition.
 pub type BalanceOf<T> =
@@ -21,7 +20,7 @@ pub type WeightOf<T> = <T as crate::Config>::WeightInfo;
     Clone,
     Encode,
     Decode,
-    RuntimeDebug,
+    Debug,
     TypeInfo,
     MaxEncodedLen,
     Serialize,
