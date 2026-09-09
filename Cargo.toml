@@ -22,7 +22,7 @@ parity-scale-codec = { version = "3.6.12", default-features = false, features = 
 frame-benchmarking = { default-features = false, git = "https://github.com/paritytech/polkadot-sdk", optional = true, tag = "polkadot-stable2603-6" }
 frame-support = { default-features = false, git = "https://github.com/paritytech/polkadot-sdk", tag = "polkadot-stable2603-6" }
 frame-system = { default-features = false, git = "https://github.com/paritytech/polkadot-sdk", tag = "polkadot-stable2603-6" }
-peaq-pallet-did = { path = "/home/jaypan/Work/upgrade/deps-2603/peaq-pallet-did/pallet", default-features = false }
+peaq-pallet-did = { default-features = false, git = "https://github.com/peaqnetwork/peaq-pallet-did", branch = "peaq-polkadot-stable2603-6" }
 scale-info = { default-features = false, features = ["derive"], version = "2.0.1" }
 serde = { version = "1.0", default-features = false, features = ["derive"] }
 sp-core = { default-features = false, git = "https://github.com/paritytech/polkadot-sdk", tag = "polkadot-stable2603-6" }
